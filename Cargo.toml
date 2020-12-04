@@ -5,3 +5,25 @@ authors = ["Michael <michael@porkbrain.com>"]
 edition = "2018"
 
 [dependencies]
+dotenv = "0.15"
+env_logger = "0.8"
+log = "0.4"
+reqwest = { version = "0.10", features = ["json"] }
+# serde is bound to reqwest, hence uses whichever version reqwest uses
+serde = { version = "*", features = ["derive"] }
+# cannot use 0.3 due to reqwest
+# https://github.com/seanmonstar/reqwest/issues/1060
+# TODO: strip full to minimum needed
+tokio = { version = "0.2", features = ["full"] }
+# version determined by `rusqlite`
+fallible-iterator = "*"
+
+[dependencies.rusqlite]
+version = "0.24"
+# Bundles the necessary libs.
+# https://github.com/rusqlite/rusqlite#notes-on-building-rusqlite-and-libsqlite3-sys
+features = ["bundled", "backup"]
+
+[dev-dependencies]
+names = "0.11"
+rand = "0.7"
