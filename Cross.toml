@@ -1,0 +1,7 @@
+[target]
+default = "armv7-unknown-linux-gnueabihf"
+
+# cross here is expected to be installed via:
+#   cargo install --git https://github.com/anupdhml/cross.git --branch master
+[target.armv7-unknown-linux-gnueabihf]
+xargo = false
