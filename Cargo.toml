@@ -10,13 +10,13 @@ env_logger = "0.8"
 log = "0.4"
 reqwest = { version = "0.10", features = ["json"] }
 # serde is bound to reqwest, hence uses whichever version reqwest uses
-serde = { version = "*", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 # cannot use 0.3 due to reqwest
 # https://github.com/seanmonstar/reqwest/issues/1060
 # TODO: strip full to minimum needed
 tokio = { version = "0.2", features = ["full"] }
 # version determined by `rusqlite`
-fallible-iterator = "*"
+fallible-iterator = "0.2"
 
 [dependencies.rusqlite]
 version = "0.24"
