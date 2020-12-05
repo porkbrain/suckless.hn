@@ -1,28 +1,28 @@
 # suckless.hn
 TODO: high level tldr
 
-> Can I have custom filters configurable from some kind of UI?
+* Can I have custom filters configurable from some kind of UI?
 
-Out of scope. Create an issue of submit a pull request if there's a filter you wish to use.
+    Out of scope. Create an issue of submit a pull request if there's a filter you wish to use.
 
-> Will you change a filter I use without my knowledge?
+* Will you change a filter I use without my knowledge?
 
-I am reluctant to change logic of a filter once it's published. However if it absolutely needs to happen, you'll be informed by a short update notice at the bottom of the page.
+    I am reluctant to change logic of a filter once it's published. However if it absolutely needs to happen, you'll be informed by a short update notice at the bottom of the page.
 
-> Censorship? Is this pushing some sort of agenda?
+* Censorship? Is this pushing some sort of agenda?
 
-I enjoy HN, but the frustration with some stories means auto censorship is valuable to me. I believe there are other people who would also like to see less of certain type of content, hence suckless.hn.
+    I enjoy HN, but the frustration with some stories means auto censorship is worth it for me. I believe there are other people who would also like to see less of certain type of content, hence suckless.hn.
 
-> Why not ML?
+* Why not ML?
 
-I prefer a set of transparent and easily editable rules to decide what I don't see. (Understand as "this is simpler".)
+    I prefer a set of transparent and easily editable rules to decide what I don't see.
 
 ## Suckless Filters™
 A filter is given story metadata and flags the story if it passes the filter. Feel free to create an issue for any missing but useful filter.
 
 Each filter has a two landing pages. One with only stories which were flagged, one with anything but. This is decided by modifies `+` and `-`. For example to only see stories from large newspapers visit [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews).
 
-There are also groups of filters. For example [`https://suckless.hn/-amgf-bignews`](https://suckless.hn/-amgf-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default on the [homepage][homepage].
+There are also groups of filters. For example [`https://suckless.hn/-amgf-bignews`](https://suckless.hn/-amgf-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default view on the [homepage][homepage].
 
 **List of implemented filters:**
 * `askhn` flags "Ask HN" titles
@@ -31,8 +31,8 @@ There are also groups of filters. For example [`https://suckless.hn/-amgf-bignew
 * `amgf` flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
 
 **List of filter groups:**
-* `-amgf-bignews` (default)
-* `+askhn+showhn`
+* [suckless.hn/`-amgf-bignews`](https://suckless.hn/-amgf-bignews) (default)
+* [suckless.hn/`+askhn+showhn`](https://suckless.hn/+askhn+showhn)
 
 Filters in a group are alphabetically sorted ASC.
 
