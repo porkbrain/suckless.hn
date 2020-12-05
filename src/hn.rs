@@ -1,5 +1,3 @@
-//! This module contains logic which polls HackerNews APIs.
-
 use crate::prelude::*;
 
 const FIREBASE_API: &str = "https://hacker-news.firebaseio.com/v0";
@@ -15,9 +13,29 @@ pub fn submission_url(id: StoryId) -> String {
 /// front page (ASC).
 ///
 /// [hn-topstories]: https://hacker-news.firebaseio.com/v0/topstories.json
-pub async fn top_stories() -> Result<Vec<StoryId>> {
+pub async fn fetch_top_stories() -> Result<Vec<StoryId>> {
     let url = format!("{}/topstories.json", FIREBASE_API);
     let stories: Vec<StoryId> = reqwest::get(&url).await?.json().await?;
+
+    Ok(stories)
+}
+
+/// Given ids, fetches information for all the stories. Calls to HN APIs which
+/// fail are logged and skipped.
+pub async fn fetch_stories(ids: &[StoryId]) -> Result<Vec<Story>> {
+    let jobs = ids.iter().copied().map(fetch_story);
+    let results = futures::future::join_all(jobs).await;
+
+    let stories = results
+        .into_iter()
+        .filter_map(|res| {
+            res.map_err(|e| {
+                log::error!("Cannot download story: e");
+                e
+            })
+            .ok()
+        })
+        .collect();
 
     Ok(stories)
 }
@@ -26,7 +44,7 @@ pub async fn top_stories() -> Result<Vec<StoryId>> {
 /// `https://hacker-news.firebaseio.com/v0/item/${STORY_ID}.json`.
 ///
 /// [hn-item]: https://github.com/HackerNews/API#items
-pub async fn story(id: StoryId) -> Result<Story> {
+async fn fetch_story(id: StoryId) -> Result<Story> {
     let url = format!("{}/item/{}.json", FIREBASE_API, id);
     let story = reqwest::get(&url).await?.json().await?;
 
@@ -39,7 +57,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_fetches_top_stories() -> Result<()> {
-        let stories = top_stories().await?;
+        let stories = fetch_top_stories().await?;
         assert_ne!(0, stories.len());
 
         Ok(())
@@ -49,7 +67,7 @@ mod tests {
     async fn it_fetches_ask_hn() -> Result<()> {
         // https://news.ycombinator.com/item?id=23366546
         let story_id = 23366546;
-        let story = story(story_id).await?;
+        let story = fetch_story(story_id).await?;
 
         assert_eq!(
             "Ask HN: \
@@ -71,7 +89,7 @@ mod tests {
     async fn it_fetches_url_submission() -> Result<()> {
         // https://news.ycombinator.com/item?id=25300310
         let story_id = 25300310;
-        let story = story(story_id).await?;
+        let story = fetch_story(story_id).await?;
 
         assert_eq!("Bit Twiddling Hacks", &story.title);
 
@@ -84,6 +102,20 @@ mod tests {
             }
             _ => panic!("Expected Ask HN story with text"),
         };
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn it_fetches_stories() -> Result<()> {
+        let stories = fetch_stories(&[25300310, 23366546]).await?;
+        assert_eq!(2, stories.len());
+        assert_eq!("Bit Twiddling Hacks", &stories[0].title);
+        assert_eq!(
+            "Ask HN: \
+            Am I the longest-serving programmer – 57 years and counting?",
+            &stories[1].title
+        );
 
         Ok(())
     }

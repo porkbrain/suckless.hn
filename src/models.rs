@@ -6,6 +6,8 @@ pub type StoryId = i64;
 pub struct Story {
     pub id: StoryId,
     pub title: String,
+    /// Optional url to wayback machine.
+    pub archive_url: Option<String>,
     /// Flattening the kind allows us to use enum instead of two mutually
     /// exclusive options.
     #[serde(flatten)]
@@ -21,6 +23,15 @@ pub enum StoryKind {
     Text(String),
 }
 
+impl Story {
+    pub fn is_url(&self) -> bool {
+        match self.kind {
+            StoryKind::Url(_) => true,
+            _ => false,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {names::Generator, rand::random};
@@ -34,8 +45,10 @@ mod tests {
             Self {
                 id: random::<i64>().abs(),
                 title: gen.next().unwrap(),
+                archive_url: None,
                 kind: StoryKind::Url(format!(
-                    "https://example.com/{}",
+                    "https://{}.com/random/{}",
+                    gen.next().unwrap(),
                     gen.next().unwrap()
                 )),
             }
@@ -46,6 +59,7 @@ mod tests {
             Self {
                 id: random::<i64>().abs(),
                 title: gen.next().unwrap(),
+                archive_url: None,
                 kind: StoryKind::Text(gen.next().unwrap()),
             }
         }

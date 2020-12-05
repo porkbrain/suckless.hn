@@ -5,13 +5,7 @@ mod hn;
 mod models;
 mod prelude;
 
-use {
-    rusqlite::{Connection, DatabaseName},
-    std::{
-        path::Path,
-        time::{SystemTime, UNIX_EPOCH},
-    },
-};
+use { rusqlite::Connection};
 
 use prelude::*;
 
@@ -22,28 +16,36 @@ async fn main() -> Result<()> {
 
     log::info!("--- suckless.hn ---");
     let conf = conf::Conf::new();
-    let sqlite = Connection::open(&conf.sqlite_file)?;
+    let conn = Connection::open(&conf.sqlite_file)?;
+    db::create_table_stories(&conn)?;
 
     if let Some(backups_dir) = &conf.backups_dir {
-        backup_db(&sqlite, backups_dir)?;
+        db::backup(&conn, backups_dir)?;
     }
 
-    // let top_stories = hn::top_stories(conf.top_stories_limit).await?;
+    let new_stories = {
+        log::info!("Fetching top stories list...");
+        let top_stories = hn::fetch_top_stories().await?;
+        let mut new_stories_ids = db::new_stories(&conn, top_stories)?;
+        new_stories_ids.truncate(conf.top_stories_limit);
+        log::info!("Fetching {} new stories...", new_stories_ids.len());
+        let mut stories = hn::fetch_stories(&new_stories_ids).await?;
+        log::info!("Fetching snapshots for new stories...");
+        archive::fetch_snapshots_for_stories(&mut stories).await?;
+        stories
+    };
 
-    // look into db for their ids to find which are missing and which aren't
+    log::info!("Applying Suckless Filters™");
+    // TODO
 
-    Ok(())
-}
+    log::info!("Inserting new stories into db...");
+    db::insert_stories(&conn, new_stories)?;
 
-// Create a new backup file of the main database with current time in name.
-fn backup_db(sqlite: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
-    let unix_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-    let backup_file_path =
-        backups_dir.as_ref().join(format!("{}.bak", unix_time));
-    let progress_fn = None;
+    log::info!("Generating html pages...");
+    // TODO
 
-    log::info!("Backing up database into {:?}.", backup_file_path);
-    sqlite.backup(DatabaseName::Main, backup_file_path, progress_fn)?;
+    log::info!("Uploading all pages to s3...");
+    // TODO
 
     Ok(())
 }
