@@ -71,6 +71,7 @@ pub fn insert_filters(
     filters: &[StoryFilters],
 ) -> Result<()> {
     if filters.is_empty() {
+        log::warn!("No filters to insert.");
         return Ok(());
     }
 
@@ -109,7 +110,7 @@ pub fn only_new_stories(
     fetched_ids: Vec<StoryId>,
 ) -> Result<Vec<StoryId>> {
     if fetched_ids.is_empty() {
-        log::warn!("No provided stories to deduplicate.");
+        log::warn!("No stories to deduplicate.");
         return Ok(vec![]);
     }
 
@@ -137,6 +138,35 @@ pub fn only_new_stories(
     });
 
     Ok(new_ids)
+}
+
+/// Retrieves story along with the information about which filters flagged it.
+pub fn select_story(
+    conn: &Connection,
+    story_id: StoryId,
+) -> Result<Option<StoryWithFilters>> {
+    let select_all_info = "
+        SELECT s.id, s.title, s.url, s.archive_url, \
+        sf.amfg, sf.askhn, sf.showhn, sf.bignews \
+        FROM stories AS s \
+        INNER JOIN story_filters AS sf ON s.id = sf.story_id \
+        WHERE s.id = ? LIMIT 1
+    ";
+
+    let mut stmt = conn
+        .query_row(select_all_info, params![story_id], |row| {
+            log::trace!("row: {:?}", row);
+            Ok(StoryWithFilters {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                url: row.get(2)?,
+                archive_url: row.get(3)?,
+                filters: vec![],
+            })
+        })
+        .optional()?;
+
+    Ok(story)
 }
 
 // Creates table `stories` if it doesn't exist yet. See the module docs for
@@ -167,7 +197,8 @@ fn create_table_story_filters(conn: &Connection) -> Result<()> {
             amfg            INTEGER(1) NOT NULL DEFAULT 0,
             askhn           INTEGER(1) NOT NULL DEFAULT 0,
             bignews         INTEGER(1) NOT NULL DEFAULT 0,
-            showhn          INTEGER(1) NOT NULL DEFAULT 0
+            showhn          INTEGER(1) NOT NULL DEFAULT 0,
+            FOREIGN KEY(story_id) REFERENCES stories(id)
         )",
         NO_PARAMS,
     )?;
@@ -244,20 +275,94 @@ mod tests {
     }
 
     #[test]
-    fn it_inserts_story_filters() -> Result<()> {
+    fn it_inserts_and_selects_story_filters() -> Result<()> {
+        let default_limit = 10;
+
         let conn = Connection::open_in_memory()?;
+        create_table_stories(&conn)?;
         create_table_story_filters(&conn)?;
+
+        let story0 = Story::random_url();
+        let story1 = Story::random_url();
+        let story2 = Story::random_url();
+        let story3 = Story::random_url();
+
+        let stories = vec![
+            story0.clone(),
+            story1.clone(),
+            story2.clone(),
+            story3.clone(),
+        ];
+        insert_stories(&conn, stories)?;
 
         insert_filters(
             &conn,
-            &vec![
-                (1, vec![FilterKind::AskHn, FilterKind::ShowHn]),
-                (2, vec![FilterKind::FromMajorNewspaper]),
-                (3, vec![]),
+            &[
+                (story0.id, vec![FilterKind::AskHn, FilterKind::ShowHn]),
+                (story1.id, vec![FilterKind::FromMajorNewspaper]),
+                (story2.id, vec![]),
+                (story3.id, vec![FilterKind::AskHn]),
             ],
         )?;
 
-        // TODO: select stories with modifiers
+        let ask_hn_stories = select_stories(
+            &conn,
+            &[Modifier::With(FilterKind::AskHn)],
+            default_limit,
+        )?;
+        assert_eq!(2, ask_hn_stories.len());
+        assert!(ask_hn_stories.contains(&story0));
+        assert!(ask_hn_stories.contains(&story3));
+
+        let limit_to_one = 1;
+        let limited_stories = select_stories(
+            &conn,
+            &[Modifier::With(FilterKind::AskHn)],
+            limit_to_one,
+        )?;
+        assert_eq!(1, limited_stories.len());
+
+        let ask_show_hn_stories = select_stories(
+            &conn,
+            &[
+                Modifier::With(FilterKind::AskHn),
+                Modifier::With(FilterKind::ShowHn),
+            ],
+            default_limit,
+        )?;
+        assert_eq!(1, ask_show_hn_stories.len());
+        assert!(ask_show_hn_stories.contains(&story0));
+
+        let amfg_stories = select_stories(
+            &conn,
+            &[
+                Modifier::With(FilterKind::AskHn),
+                Modifier::With(FilterKind::ShowHn),
+            ],
+            default_limit,
+        )?;
+        assert!(amfg_stories.is_empty());
+
+        let no_bignews_stories = select_stories(
+            &conn,
+            &[Modifier::Without(FilterKind::FromMajorNewspaper)],
+            default_limit,
+        )?;
+        assert_eq!(3, amfg_stories.len());
+        assert!(ask_show_hn_stories.contains(&story0));
+        assert!(ask_show_hn_stories.contains(&story2));
+        assert!(ask_show_hn_stories.contains(&story3));
+
+        let ask_hn_not_shown_stories = select_stories(
+            &conn,
+            &[
+                Modifier::With(FilterKind::AskHn),
+                Modifier::Without(FilterKind::ShowHn),
+            ],
+            default_limit,
+        )?;
+        assert_eq!(1, ask_hn_not_shown_stories.len());
+        assert!(ask_hn_not_shown_stories.contains(&story3));
 
         Ok(())
     }

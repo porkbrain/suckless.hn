@@ -13,7 +13,9 @@ pub enum FilterKind {
     MentionsBigTech,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(test, derive(Clone, Debug, PartialEq))]
 pub struct Story {
     pub id: StoryId,
     pub title: String,
@@ -25,13 +27,33 @@ pub struct Story {
     pub kind: StoryKind,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, derive(Clone, Debug, PartialEq))]
 pub enum StoryKind {
     // [`Story`] will have property "url".
     Url(String),
     // [`Story`] will have property "text".
     Text(String),
+}
+
+/// Story information which we retrieve from the database. A join query on both
+/// `stories` and `story_filters` tables.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoryWithFilters {
+    pub id: StoryId,
+    pub title: String,
+    pub url: String,
+    pub archive_url: Option<String>,
+    pub filters: Vec<FilterKind>,
+}
+
+/// Determines whether we are interested in stories matching or not matching
+/// given filter.
+pub enum Modifier {
+    With(FilterKind),
+    Without(FilterKind),
 }
 
 #[cfg(test)]
