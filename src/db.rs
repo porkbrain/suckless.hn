@@ -1,7 +1,8 @@
-//! Contains logic for storing and retrieving data from the sqlite database that
-//! we store stories in. That means a single `stories` table.
+//! [`sqlite`][sqlite] database stores ids of top HN posts that are already
+//! downloaded + some other metadata (timestamp of insertion, submission title,
+//! url, which filters it passed).
 //!
-//! Fields of `stories`:
+//! # Table `stories`
 //! * `id` is the HN id
 //! * `title` is the displayed HN title, always present
 //! * `url` is either the article link or a link to the HN submission if
@@ -10,6 +11,14 @@
 //!     url to alternative source
 //! * `created_at` is a [unix time][sqlite-time] of when we inserted into db
 //!
+//! # Table `story_filters`
+//! * `story_id` is the HN id
+//! * `amfg` is boolean set to 1 if filter flagged story
+//! * `askhn` is boolean set to 1 if filter flagged story
+//! * `bignews` is boolean set to 1 if filter flagged story
+//! * `showhn` is boolean set to 1 if filter flagged story
+//!
+//! [sqlite]: https://github.com/rusqlite/rusqlite
 //! [sqlite-time]: https://stackoverflow.com/q/200309/5093093#comment11501547_200329
 
 use {
@@ -21,7 +30,7 @@ use {
     },
 };
 
-use crate::{conf, hn, prelude::*};
+use crate::{conf, filters::Filter, hn, prelude::*};
 
 /// Creates sqlite connection to a file. If the file doesn't exist, creates
 /// necessary tables.
@@ -30,6 +39,7 @@ use crate::{conf, hn, prelude::*};
 pub fn conn(conf: &conf::Conf) -> Result<Connection> {
     let conn = Connection::open(&conf.sqlite_file)?;
     create_table_stories(&conn)?;
+    create_table_story_filters(&conn)?;
 
     if let Some(backups_dir) = &conf.backups_dir {
         backup(&conn, backups_dir)?;
@@ -49,6 +59,46 @@ pub fn insert_stories(
     for story in stories {
         insert_story(conn, story)?;
     }
+
+    Ok(())
+}
+
+/// Inserts story ids associated with filters which it passed into the database.
+/// Filters which flagged story are set to 1 (true), all other are defaulted to
+/// 0 (false).
+pub fn insert_filters(
+    conn: &Connection,
+    filters: &[StoryFilters],
+) -> Result<()> {
+    if filters.is_empty() {
+        return Ok(());
+    }
+
+    let insert_stmts = filters.iter().map(|(id, filters)| {
+        if filters.is_empty() {
+            format!("INSERT INTO story_filters (story_id) VALUES ({});\n", id)
+        } else {
+            let filters_names: Vec<_> =
+                filters.iter().map(|f| f.name()).collect();
+
+            format!(
+                "INSERT INTO story_filters (story_id, {}) VALUES ({}, {});\n",
+                filters_names.as_slice().join(","),
+                id,
+                // 1 implies true (filter flagged story), rest defaults to 0
+                ["1"].repeat(filters.len()).as_slice().join(",")
+            )
+        }
+    });
+
+    let sql = {
+        let mut sql_builder = "BEGIN;\n".to_string();
+        insert_stmts.for_each(|stmt| sql_builder.push_str(&stmt));
+        sql_builder.push_str("COMMIT;");
+        sql_builder
+    };
+
+    conn.execute_batch(&sql)?;
 
     Ok(())
 }
@@ -106,6 +156,25 @@ fn create_table_stories(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
+// Creates table `story_filters` if it doesn't exist yet. See the module docs
+// for the fields description.
+//
+// TODO: How do we migrate to new filters?
+fn create_table_story_filters(conn: &Connection) -> Result<()> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS story_filters (
+            story_id        INTEGER PRIMARY KEY,
+            amfg            INTEGER(1) NOT NULL DEFAULT 0,
+            askhn           INTEGER(1) NOT NULL DEFAULT 0,
+            bignews         INTEGER(1) NOT NULL DEFAULT 0,
+            showhn          INTEGER(1) NOT NULL DEFAULT 0
+        )",
+        NO_PARAMS,
+    )?;
+
+    Ok(())
+}
+
 // Creates a new backup file of the main database with current time in name.
 fn backup(conn: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
     let unix_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
@@ -154,7 +223,6 @@ mod tests {
     #[test]
     fn it_returns_only_new_stories() -> Result<()> {
         let conn = Connection::open_in_memory()?;
-
         create_table_stories(&conn)?;
 
         assert_eq!(vec![1, 2, 3], only_new_stories(&conn, vec![1, 2, 3])?);
@@ -171,6 +239,25 @@ mod tests {
             vec![1],
             only_new_stories(&conn, vec![1, story1_id, story2_id])?
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_inserts_story_filters() -> Result<()> {
+        let conn = Connection::open_in_memory()?;
+        create_table_story_filters(&conn)?;
+
+        insert_filters(
+            &conn,
+            &vec![
+                (1, vec![FilterKind::AskHn, FilterKind::ShowHn]),
+                (2, vec![FilterKind::FromMajorNewspaper]),
+                (3, vec![]),
+            ],
+        )?;
+
+        // TODO: select stories with modifiers
 
         Ok(())
     }

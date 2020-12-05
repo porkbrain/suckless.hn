@@ -3,6 +3,8 @@
 //! Given a story, filter will decide based on the story content whether to flag
 //! it. This information is then written to the database.
 
+mod impls;
+
 use {lazy_static::lazy_static, regex::Regex};
 
 use crate::prelude::*;
@@ -11,78 +13,35 @@ pub trait Filter {
     /// Name of the filter group. For now all filter groups are hard coded.
     /// We use name instead of [`std::fmt::Display`] because the impl is less
     /// code and we can use 'static.
-    fn name() -> &'static str;
+    fn name(&self) -> &'static str;
 
-    /// Does the filter group apply to the given story?
-    fn applies(story: &Story) -> bool;
+    /// Does the filter apply to the given story?
+    fn should_flag(&self, story: &Story) -> bool;
 }
 
-pub struct AskHn;
-pub struct ShowHn;
-pub struct FromMajorNewspaper;
-pub struct MentionsBigTech;
+// IMPORTANT: This needs to be sorted based on name.
+const FILTERS: &[FilterKind] = &[
+    FilterKind::MentionsBigTech,
+    FilterKind::AskHn,
+    FilterKind::FromMajorNewspaper,
+    FilterKind::ShowHn,
+];
 
-impl Filter for AskHn {
-    fn name() -> &'static str {
-        "askhn"
-    }
+/// Given stories, returns a list of filters which flagged each story.
+/// The output vector is of the same size as the input.
+pub fn for_stories(stories: &[Story]) -> Vec<StoryFilters> {
+    stories
+        .iter()
+        .map(|story| {
+            let story_filters = FILTERS
+                .iter()
+                .copied()
+                .filter(|f| f.should_flag(story))
+                .collect();
 
-    fn applies(story: &Story) -> bool {
-        story.title.starts_with("Ask HN")
-    }
-}
-
-impl Filter for ShowHn {
-    fn name() -> &'static str {
-        "showhn"
-    }
-
-    fn applies(story: &Story) -> bool {
-        story.title.starts_with("Show HN")
-    }
-}
-
-impl Filter for FromMajorNewspaper {
-    fn name() -> &'static str {
-        "bignews"
-    }
-
-    fn applies(story: &Story) -> bool {
-        lazy_static! {
-            static ref NEWSPAPER_WEBSITE: Regex = Regex::new(concat!(
-                "https?://", // doesn't have to be tls
-                "(?:www\\.)?", // can start with www
-                "(?:", // start non-capturing group of websites
-                "bbc\\.com|",
-                "wsj\\.com|",
-                "bloomberg\\.com|",
-                "vice\\.com|",
-                "theguardian\\.com|",
-                "cnbc\\.com|",
-                "forbes\\.com",
-                ")"
-            )).expect("Invalid newspaper website regex");
-        }
-
-        match &story.kind {
-            StoryKind::Url(url) => NEWSPAPER_WEBSITE.is_match(&url),
-            StoryKind::Text(_) => false,
-        }
-    }
-}
-
-impl Filter for MentionsBigTech {
-    fn name() -> &'static str {
-        "amfg"
-    }
-
-    fn applies(story: &Story) -> bool {
-        let t = &story.title;
-        t.contains("Apple")
-            || t.contains("Microsoft")
-            || t.contains("Facebook")
-            || t.contains("Google")
-    }
+            (story.id, story_filters)
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -90,16 +49,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_should_match_newspapers() {
-        let news = "https://www.wsj.com/articles/reddit-claims-52-million-daily-users-revealing-a-key-figure-for-social-media-platforms-11606822200";
-        let mut story = Story::random_url();
-        story.kind = StoryKind::Url(news.to_string());
-        assert!(FromMajorNewspaper::applies(&story));
+    fn it_has_sorted_list_of_filters() {
+        let mut filters = FILTERS.to_vec();
+        filters.sort_by(|a, b| a.name().cmp(b.name()));
+        assert_eq!(filters.as_slice(), FILTERS);
+        // https://github.com/rust-lang/rust/issues/53485
+        // debug_assert!(FILTERS.is_sorted_by(|a, b| a.name().cmp(b.name())));
+    }
 
-        let story = Story::random_url();
-        assert!(!FromMajorNewspaper::applies(&story));
+    #[test]
+    fn it_picks_filters_for_stories() {
+        let bbc_google_story = {
+            let mut story = Story::random_url();
+            story.kind = StoryKind::Url("https://bbc.com".to_string());
+            story.title = "Pure Google mate".to_string();
+            story
+        };
+        let bbc_google_story_id = bbc_google_story.id;
 
-        let story = Story::random_text();
-        assert!(!FromMajorNewspaper::applies(&story));
+        let ask_hn_story = {
+            let mut story = Story::random_url();
+            story.title = "Ask HN: Hello".to_string();
+            story
+        };
+        let ask_hn_story_id = ask_hn_story.id;
+
+        let stories = &[bbc_google_story, ask_hn_story, Story::random_text()];
+
+        let filters = for_stories(stories);
+        assert_eq!(3, filters.len());
+        assert_eq!(
+            (
+                bbc_google_story_id,
+                vec![
+                    FilterKind::MentionsBigTech,
+                    FilterKind::FromMajorNewspaper
+                ]
+            ),
+            filters[0]
+        );
+        assert_eq!((ask_hn_story_id, vec![FilterKind::AskHn]), filters[1]);
+        assert!(filters[2].1.is_empty());
     }
 }

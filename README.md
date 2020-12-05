@@ -1,12 +1,28 @@
 # suckless.hn
-TODO: motivation, high level tldr
+TODO: high level tldr
+
+> Can I have custom filters configurable from some kind of UI?
+
+Out of scope. Create an issue of submit a pull request if there's a filter you wish to use.
+
+> Will you change a filter I use without my knowledge?
+
+I am reluctant to change logic of a filter once it's published. However if it absolutely needs to happen, you'll be informed by a short update notice at the bottom of the page.
+
+> Censorship? Is this pushing some sort of agenda?
+
+I enjoy HN, but the frustration with some stories means auto censorship is valuable to me. I believe there are other people who would also like to see less of certain type of content, hence suckless.hn.
+
+> Why not ML?
+
+I prefer a set of transparent and easily editable rules to decide what I don't see. (Understand as "this is simpler".)
 
 ## Suckless Filters™
 A filter is given story metadata and flags the story if it passes the filter. Feel free to create an issue for any missing but useful filter.
 
 Each filter has a two landing pages. One with only stories which were flagged, one with anything but. This is decided by modifies `+` and `-`. For example to only see stories from large newspapers visit [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews).
 
-There are also groups of filters. For example [`https://suckless.hn/-bignews-amgf`](https://suckless.hn/-bignews-amgf) filters out large newspapers and all mentions of big tech. This also happens to be the default on the [homepage][homepage].
+There are also groups of filters. For example [`https://suckless.hn/-amgf-bignews`](https://suckless.hn/-amgf-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default on the [homepage][homepage].
 
 **List of implemented filters:**
 * `askhn` flags "Ask HN" titles
@@ -15,22 +31,28 @@ There are also groups of filters. For example [`https://suckless.hn/-bignews-amg
 * `amgf` flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
 
 **List of filter groups:**
-* `-bignews-amgf` (default)
+* `-amgf-bignews` (default)
 * `+askhn+showhn`
 
+Filters in a group are alphabetically sorted ASC.
+
 ## Design
+The repo is a binary which is supposed to be executed periodically (~ 30 min).
+
 [`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other metadata (timestamp of insertion, submission title, url, which filters it passed).
 
-The endpoint to query top stories on HN is [https://hacker-news.firebaseio.com/v0/topstories.json][hn-topstories]. Periodically we check each story in this index which we haven't checked before or that has passed [Suckless Filters™](#suckless-filters). The data about a story is available via [item endpoint][hn-item].
+The endpoint to query top stories on HN is [https://hacker-news.firebaseio.com/v0/topstories.json][hn-topstories]. Periodically we check stories in this index which we haven't checked before. The data about a story is available via [item endpoint][hn-item].
 
-We check each new story against Suckless Filters™ before inserting it into the database.
+We check each new story against Suckless Filters™ before inserting it into the database table `stories`. The flags for each filter are persisted in `story_filters` table.
 
 Final step is generating a new html for the [suckless.hn][suckless-hn] front page and uploading it into S3 bucket. The S3 bucket is behind Cloudfront distribution to which the `suckless.hn` zone records point. We set up different combinations of filters and upload those combinations as different S3 objects.
 
 ## Rate limiting
-We handle rate limiting by simply skipping submission. When we start getting 429 errors, the binary terminates and we expect `cron` to again run it at a later point.
+We handle rate limiting by simply skipping submission. Since we poll missing stories periodically, they will be fetched eventually.
 
-Also we don't need to check all top stories. We can slice the [top stories][hn-topstories] endpoint and only consider first ~ 30 entries.
+We don't need to check all top stories. We can slice the [top stories][hn-topstories] endpoint and only consider first ~ 30 entries.
+
+[Wayback machine](#wayback-machine) has some kind of rate limiting which makes concurrent requests fail. We run wayback machine queries sequentially.
 
 ## Wayback machine
 We leverage [wayback machine APIs][wayback-machine-api] to provide users link to the latest archived snapshot at the time of the submission.

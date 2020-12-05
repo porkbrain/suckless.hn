@@ -21,10 +21,11 @@ async fn main() -> Result<()> {
 
     let new_stories = get_new_stories(&conn, &conf).await?;
 
-    log::info!("Applying Suckless Filters™");
-    // TODO
+    log::info!("Applying Suckless Filters™...");
+    let new_stories_filters = filters::for_stories(&new_stories);
 
     db::insert_stories(&conn, new_stories)?;
+    db::insert_filters(&conn, &new_stories_filters)?;
 
     log::info!("Generating html pages...");
     // TODO

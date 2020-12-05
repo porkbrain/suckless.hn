@@ -1,6 +1,17 @@
 use serde::Deserialize;
 
 pub type StoryId = i64;
+pub type StoryFilters = (StoryId, Vec<FilterKind>);
+
+/// Supported filters, for specifics see [`filters::impls`] module.
+// TODO(https://github.com/rust-lang/rust/issues/27747): Impl [`std::slice::Join`]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum FilterKind {
+    AskHn,
+    ShowHn,
+    FromMajorNewspaper,
+    MentionsBigTech,
+}
 
 #[derive(Deserialize, Debug)]
 pub struct Story {
