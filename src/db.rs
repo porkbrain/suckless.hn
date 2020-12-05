@@ -21,11 +21,77 @@ use {
     },
 };
 
-use crate::{hn, prelude::*};
+use crate::{conf, hn, prelude::*};
 
-/// Creates table `stories` if it doesn't exist yet. See the module docs for
-/// the fields description.
-pub fn create_table_stories(conn: &Connection) -> Result<()> {
+/// Creates sqlite connection to a file. If the file doesn't exist, creates
+/// necessary tables.
+///
+/// If `BACKUPS_DIR` env var is set we backup the db.
+pub fn conn(conf: &conf::Conf) -> Result<Connection> {
+    let conn = Connection::open(&conf.sqlite_file)?;
+    create_table_stories(&conn)?;
+
+    if let Some(backups_dir) = &conf.backups_dir {
+        backup(&conn, backups_dir)?;
+    }
+
+    Ok(conn)
+}
+
+/// Synchronously inserts each story.
+pub fn insert_stories(
+    conn: &Connection,
+    stories: impl IntoIterator<Item = Story>,
+) -> Result<()> {
+    log::debug!("Inserting new stories into db...");
+
+    // TODO: Optimization is to insert stories in batch.
+    for story in stories {
+        insert_story(conn, story)?;
+    }
+
+    Ok(())
+}
+
+/// Given list of HN story ids, discards the ones we already store in db.
+pub fn only_new_stories(
+    conn: &Connection,
+    fetched_ids: Vec<StoryId>,
+) -> Result<Vec<StoryId>> {
+    if fetched_ids.is_empty() {
+        log::warn!("No provided stories to deduplicate.");
+        return Ok(vec![]);
+    }
+
+    let min_id = *fetched_ids.iter().min().unwrap(); // can't be empty
+    let mut stmt =
+        conn.prepare("SELECT id FROM stories WHERE id >= ?1 ORDER BY id ASC")?;
+    let stored_ids: Vec<StoryId> = stmt
+        .query(params![min_id])?
+        .map(|r| r.get(0).map(|id: i64| id as StoryId))
+        .collect()?;
+
+    if stored_ids.is_empty() {
+        log::debug!("No stored stories since story {}.", min_id);
+        return Ok(fetched_ids);
+    }
+
+    // `stored_ids` sorted ASC
+    let latest_stored_id = stored_ids[stored_ids.len() - 1]; // can't be empty
+
+    let mut new_ids = fetched_ids;
+    new_ids.retain(|id| {
+        // `ids` newer than latest stored id will definitely be missing
+        // bin search returns err if an id is not present
+        *id > latest_stored_id || stored_ids.binary_search(id).is_err()
+    });
+
+    Ok(new_ids)
+}
+
+// Creates table `stories` if it doesn't exist yet. See the module docs for
+// the fields description.
+fn create_table_stories(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS stories (
             id              INTEGER PRIMARY KEY,
@@ -40,8 +106,8 @@ pub fn create_table_stories(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-/// Creates a new backup file of the main database with current time in name.
-pub fn backup(conn: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
+// Creates a new backup file of the main database with current time in name.
+fn backup(conn: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
     let unix_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
     let backup_file_path =
         backups_dir.as_ref().join(format!("{}.bak", unix_time));
@@ -53,22 +119,9 @@ pub fn backup(conn: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-/// Synchronously inserts each story.
-pub fn insert_stories(
-    conn: &Connection,
-    stories: impl IntoIterator<Item = Story>,
-) -> Result<()> {
-    // TODO: Optimization is to insert stories in batch.
-    for story in stories {
-        insert_story(conn, story)?;
-    }
-
-    Ok(())
-}
-
 /// Inserts given story into the db. A submission with link will have url
 /// pointing to the article, a text submission to the HN post.
-pub fn insert_story(conn: &Connection, story: Story) -> Result<()> {
+fn insert_story(conn: &Connection, story: Story) -> Result<()> {
     let Story {
         id,
         title,
@@ -94,52 +147,17 @@ pub fn insert_story(conn: &Connection, story: Story) -> Result<()> {
     Ok(())
 }
 
-/// Given list of HN story ids, discards the ones we already store in db.
-pub fn new_stories(
-    conn: &Connection,
-    ids: Vec<StoryId>,
-) -> Result<Vec<StoryId>> {
-    if ids.is_empty() {
-        return Ok(vec![]);
-    }
-
-    let min_id = *ids.iter().min().unwrap(); // can't be empty
-    let mut stmt =
-        conn.prepare("SELECT id FROM stories WHERE id >= ?1 ORDER BY id ASC")?;
-    let stored_ids: Vec<StoryId> = stmt
-        .query(params![min_id])?
-        .map(|r| r.get(0).map(|id: i64| id as StoryId))
-        .collect()?;
-
-    if stored_ids.is_empty() {
-        log::debug!("No stored stories since story {}.", min_id);
-        return Ok(ids);
-    }
-
-    // `stored_ids` sorted ASC
-    let latest_stored_id = stored_ids[stored_ids.len() - 1]; // can't be empty
-
-    let mut ids = ids;
-    ids.retain(|id| {
-        // `ids` newer than latest stored id will definitely be missing
-        // bin search returns err if an id is not present
-        *id > latest_stored_id || stored_ids.binary_search(id).is_err()
-    });
-
-    Ok(ids)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn it_returns_new_stories() -> Result<()> {
+    fn it_returns_only_new_stories() -> Result<()> {
         let conn = Connection::open_in_memory()?;
 
         create_table_stories(&conn)?;
 
-        assert_eq!(vec![1, 2, 3], new_stories(&conn, vec![1, 2, 3])?);
+        assert_eq!(vec![1, 2, 3], only_new_stories(&conn, vec![1, 2, 3])?);
 
         let story1 = Story::random_url();
         let story1_id = story1.id;
@@ -149,7 +167,10 @@ mod tests {
         let story2_id = story2.id;
         insert_story(&conn, story2)?;
 
-        assert_eq!(vec![1], new_stories(&conn, vec![1, story1_id, story2_id])?);
+        assert_eq!(
+            vec![1],
+            only_new_stories(&conn, vec![1, story1_id, story2_id])?
+        );
 
         Ok(())
     }

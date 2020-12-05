@@ -14,30 +14,18 @@ use crate::prelude::*;
 /// Downloads snapshot from Wayback machine if one exists and assigns it to the
 /// model.
 pub async fn fetch_snapshots_for_stories(stories: &mut [Story]) -> Result<()> {
-    // only requests snapshots for urls, not for text
-    let jobs = stories.iter().filter_map(|story| match &story.kind {
-        StoryKind::Url(url) => Some(fetch_snapshot(&url)),
-        StoryKind::Text(_) => None,
-    });
-
-    // awaits each future and maps [`Err`] to [`None`].
-    let archive_urls =
-        futures::future::join_all(jobs)
-            .await
-            .into_iter()
-            .map(|res| {
-                res.map_err(|e| {
-                    log::warn!("Cannot fetch snapshot: {}", e);
-                    e
-                })
-                .ok()
-                .flatten()
-            });
-    // gets only stories which are url so that we can zip with archive urls
-    let url_stories = stories.iter_mut().filter(|s| s.is_url());
-
-    for (story, archive_url) in url_stories.zip(archive_urls) {
-        story.archive_url = archive_url;
+    // we run this sequentially because wayback machine APIs are quick to
+    // throttle concurrent requests
+    for story in stories {
+        // only requests snapshots for urls, not for text
+        if let StoryKind::Url(url) = &story.kind {
+            match fetch_snapshot(&url).await {
+                Ok(snapshot) => story.archive_url = snapshot,
+                Err(e) => {
+                    log::warn!("Cannot check snapshot for {}: {}", url, e);
+                }
+            }
+        }
     }
 
     Ok(())
@@ -73,8 +61,6 @@ async fn fetch_snapshot(url: &str) -> Result<Option<String>> {
 mod tests {
     //! These sets must be ran sequentially, hence they're in a single test
     //! case. Not running them sequentially causes some weird failures.
-
-    use std::env;
 
     use super::*;
 

@@ -23,22 +23,14 @@ pub enum StoryKind {
     Text(String),
 }
 
-impl Story {
-    pub fn is_url(&self) -> bool {
-        match self.kind {
-            StoryKind::Url(_) => true,
-            _ => false,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    //! Implement method factory methods used by other tests.
+
     use {names::Generator, rand::random};
 
     use super::*;
 
-    // Implement story factory methods.
     impl Story {
         pub fn random_url() -> Self {
             let mut gen = Generator::default();

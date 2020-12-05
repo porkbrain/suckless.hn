@@ -1,8 +1,22 @@
 # suckless.hn
-TODO: motivation, combinations of filters
+TODO: motivation, high level tldr
 
 ## Suckless Filters™
-TODO
+A filter is given story metadata and flags the story if it passes the filter. Feel free to create a new issue for a filter you'd like to use.
+
+Each filter has a landing page based on its name where you can see either only stories which were or weren't flagged by the filter, depending on the url mode. For example to only see stories from large newspapers, you'd go to [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers, you'd visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews). Use modifiers `+` and `-` to load only flagged stories, or anything but.
+
+There are also groups of filters. For example [`https://suckless.hn/-bignews-amgf`](https://suckless.hn/-bignews-amgf) filters out large newspapers and all mentions of big tech. This also happens to be the default filter when you visit the [homepage][homepage].
+
+**List of implemented filters:**
+* `askhn` flags "Ask HN" titles
+* `showhn` flags "Show HN" titles
+* `bignews` flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC and Forbes.
+* `amgf` flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
+
+**List of filter groups:**
+* `-bignews-amgf` (default)
+* `+askhn+showhn`
 
 ## Design
 [`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other metadata (timestamp of insertion, submission title, url, which filters it passed).
@@ -41,6 +55,7 @@ cross build --target armv7-unknown-linux-gnueabihf --release
 There's a helper script `deploy.sh` which compiles the binary and deploys it to the pi. It requires some env vars you can find in the `.env.deploy.example`. Rename the file to `.env.deploy` and change the values to deploy.
 
 <!-- References -->
+[homepage]: https://suckless.hn
 [pi-4]: https://www.raspberrypi.org/products/raspberry-pi-4-model-b
 [pi-target]: https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
 [cross]: https://github.com/rust-embedded/cross
