@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub type StoryId = i64;
 pub type StoryFilters = (StoryId, Vec<FilterKind>);
@@ -13,7 +13,7 @@ pub enum FilterKind {
     MentionsBigTech,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Story {
     pub id: StoryId,
     pub title: String,
@@ -25,7 +25,7 @@ pub struct Story {
     pub kind: StoryKind,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum StoryKind {
     // [`Story`] will have property "url".

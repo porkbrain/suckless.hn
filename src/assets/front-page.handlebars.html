@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hacker News minus content you don't like.">
+    <meta name="keywords" content="suckless,hacker news, hackernews, hn, news">
+    <link rel="stylesheet" href="static/style.css">
+
+    <title>suckless.hn</title>
+</head>
+<body>
+    <section class="stories">
+        {{#each stories}}
+            <div class="story">
+                <span class="title">
+                    {{#if url}}
+                        <a href="{{url}}">{{title}}</a>
+                    {{else}}
+                        <a href="https://news.ycombinator.com/item?id={{id}}">{{title}}</a>
+                    {{/if}}
+                </span>
+                <span class="comments-link">
+                    <a href="https://news.ycombinator.com/item?id={{id}}">read comments</a>
+                </span>
+                {{#if archive_url}}
+                    <span class="archive-link">
+                        <a href="{{archive_url}}">view at wayback machine</a>
+                    </span>
+                {{/if}}
+            </div>
+        {{/each}}
+    </section>
+
+    <footer>
+        TODO: active filters, about page
+    </footer>
+</body>
+</html>

@@ -1,6 +1,10 @@
 # suckless.hn
 TODO: high level tldr
 
+* Why isn't this an app into which I login as HN user and you [hide][hn-hide-story] stories on my behalf?
+
+    As a user I wouldn't login into some random app. As a developer I don't want to manage user credentials.
+
 * Can I have custom filters configurable from some kind of UI?
 
     Out of scope. Create an issue of submit a pull request if there's a filter you wish to use.
@@ -37,7 +41,7 @@ There are also groups of filters. For example [`https://suckless.hn/-amgf-bignew
 Filters in a group are alphabetically sorted ASC.
 
 ## Design
-The repo is a binary which is supposed to be executed periodically (~ 30 min).
+The binary is executed periodically (~ 30 min). (I run it on my rasbpi 4.)
 
 [`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other metadata (timestamp of insertion, submission title, url, which filters it passed).
 
@@ -45,7 +49,7 @@ The endpoint to query top stories on HN is [https://hacker-news.firebaseio.com/v
 
 We check each new story against Suckless Filters™ before inserting it into the database table `stories`. The flags for each filter are persisted in `story_filters` table.
 
-Final step is generating a new html for the [suckless.hn][suckless-hn] front page and uploading it into S3 bucket. The S3 bucket is behind Cloudfront distribution to which the `suckless.hn` zone records point. We set up different combinations of filters and upload those combinations as different S3 objects.
+Final step is generating a new html for the [suckless.hn][suckless-hn] front page and uploading it into an [S3 bucket][s3-upload]. The S3 bucket is behind Cloudfront distribution to which the `suckless.hn` zone records point. We set up different combinations of filters and upload those combinations as different S3 objects. The objects are all of `Content-type: text/html`, however they don't have html suffixes.
 
 ## Rate limiting
 We handle rate limiting by simply skipping submission. Since we poll missing stories periodically, they will be fetched eventually.
@@ -87,3 +91,5 @@ There's a helper script `deploy.sh` which compiles the binary and deploys it to 
 [suckless-hn]: https://suckless.hn
 [wayback-machine-api]: https://archive.org/help/wayback_api.php
 [wayback-donate]: https://archive.org/donate
+[hn-hide-story]: https://news.ycombinator.com/item?id=5225884
+[s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type

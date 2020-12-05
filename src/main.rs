@@ -3,6 +3,7 @@ mod conf;
 mod db;
 mod filters;
 mod hn;
+mod html;
 mod models;
 mod prelude;
 

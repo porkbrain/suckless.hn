@@ -9,8 +9,9 @@ dotenv = "0.15"
 env_logger = "0.8"
 fallible-iterator = "0.2"
 futures = "0.3"
-log = "0.4"
+handlebars = "3.5"
 lazy_static = "1.4"
+log = "0.4"
 regex = "1.4"
 reqwest = { version = "0.10", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
