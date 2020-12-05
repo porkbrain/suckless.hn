@@ -5,7 +5,6 @@
 //!     snapshot doesn't exist yet.
 //! * TODO(https://github.com/bausano/suckless.hn/issues/1): Get 'timestamp'
 //!     property and ignore snapshots older than a month.
-//! * TODO(https://github.com/bausano/suckless.hn/issues/3): Retry a few times.
 
 use serde::Deserialize;
 

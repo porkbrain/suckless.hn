@@ -2,11 +2,11 @@
 TODO: motivation, high level tldr
 
 ## Suckless Filters™
-A filter is given story metadata and flags the story if it passes the filter. Feel free to create a new issue for a filter you'd like to use.
+A filter is given story metadata and flags the story if it passes the filter. Feel free to create an issue for any missing but useful filter.
 
-Each filter has a landing page based on its name where you can see either only stories which were or weren't flagged by the filter, depending on the url mode. For example to only see stories from large newspapers, you'd go to [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers, you'd visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews). Use modifiers `+` and `-` to load only flagged stories, or anything but.
+Each filter has a two landing pages. One with only stories which were flagged, one with anything but. This is decided by modifies `+` and `-`. For example to only see stories from large newspapers visit [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews).
 
-There are also groups of filters. For example [`https://suckless.hn/-bignews-amgf`](https://suckless.hn/-bignews-amgf) filters out large newspapers and all mentions of big tech. This also happens to be the default filter when you visit the [homepage][homepage].
+There are also groups of filters. For example [`https://suckless.hn/-bignews-amgf`](https://suckless.hn/-bignews-amgf) filters out large newspapers and all mentions of big tech. This also happens to be the default on the [homepage][homepage].
 
 **List of implemented filters:**
 * `askhn` flags "Ask HN" titles
@@ -52,7 +52,7 @@ Compile for `armv7-unknown-linux-gnueabihf`.
 cross build --target armv7-unknown-linux-gnueabihf --release
 ```
 
-There's a helper script `deploy.sh` which compiles the binary and deploys it to the pi. It requires some env vars you can find in the `.env.deploy.example`. Rename the file to `.env.deploy` and change the values to deploy.
+There's a helper script `deploy.sh` which compiles the binary and deploys it to the pi. It requires env vars listed in the `.env.deploy.example`. Rename the file to `.env.deploy` and change the values to deploy.
 
 <!-- References -->
 [homepage]: https://suckless.hn
