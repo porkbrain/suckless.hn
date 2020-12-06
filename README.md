@@ -1,4 +1,5 @@
 # suckless.hn
+TODO: waiting to bug fix at https://github.com/durch/rust-s3/issues/148
 TODO: high level tldr
 
 * Why isn't this an app into which I login as HN user and you [hide][hn-hide-story] stories on my behalf?
