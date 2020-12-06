@@ -6,9 +6,9 @@ pub struct Conf {
     pub sqlite_file: PathBuf,
     /// If provided, we run a db backup before we start downloading new items.
     pub backups_dir: Option<PathBuf>,
-    /// How many top stories should we fetch from the HNs APIs and display on
+    /// How many new stories should we fetch from the HNs APIs and display on
     /// the suckless.hn front page.
-    pub top_stories_limit: usize,
+    pub new_stories_limit: usize,
 }
 
 impl Conf {
@@ -34,16 +34,16 @@ impl Conf {
         }
 
         // swallows parsing errors but it's ok for our use case
-        let top_stories_limit = env::var(vars::TOP_STORIES_LIMIT)
+        let new_stories_limit = env::var(vars::NEW_STORIES_LIMIT)
             .ok()
             .and_then(|s| s.parse::<usize>().ok())
-            .unwrap_or(defaults::TOP_STORIES_LIMIT);
-        log::debug!("{}={:?}", vars::TOP_STORIES_LIMIT, top_stories_limit);
+            .unwrap_or(defaults::NEW_STORIES_LIMIT);
+        log::debug!("{}={:?}", vars::NEW_STORIES_LIMIT, new_stories_limit);
 
         Self {
             sqlite_file,
             backups_dir,
-            top_stories_limit,
+            new_stories_limit,
         }
     }
 }
@@ -51,9 +51,9 @@ impl Conf {
 mod vars {
     pub const SQLITE_FILE: &str = "SQLITE_FILE";
     pub const BACKUPS_DIR: &str = "BACKUPS_DIR"; // opt
-    pub const TOP_STORIES_LIMIT: &str = "TOP_STORIES_LIMIT"; // opt
+    pub const NEW_STORIES_LIMIT: &str = "NEW_STORIES_LIMIT"; // opt
 }
 
 mod defaults {
-    pub const TOP_STORIES_LIMIT: usize = 30;
+    pub const NEW_STORIES_LIMIT: usize = 30;
 }

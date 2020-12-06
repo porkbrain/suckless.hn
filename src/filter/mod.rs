@@ -4,6 +4,9 @@
 //! it. This information is then written to the database.
 
 mod impls;
+pub mod page;
+
+pub use page::Page;
 
 use {lazy_static::lazy_static, regex::Regex};
 
@@ -21,9 +24,9 @@ pub trait Filter {
 
 // IMPORTANT: This needs to be sorted based on name.
 const FILTERS: &[FilterKind] = &[
-    FilterKind::MentionsBigTech,
+    FilterKind::BigTech,
     FilterKind::AskHn,
-    FilterKind::FromMajorNewspaper,
+    FilterKind::LargeNewspaper,
     FilterKind::ShowHn,
 ];
 
@@ -81,10 +84,7 @@ mod tests {
         assert_eq!(
             (
                 bbc_google_story_id,
-                vec![
-                    FilterKind::MentionsBigTech,
-                    FilterKind::FromMajorNewspaper
-                ]
+                vec![FilterKind::BigTech, FilterKind::LargeNewspaper]
             ),
             filters[0]
         );

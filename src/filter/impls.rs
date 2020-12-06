@@ -2,8 +2,8 @@ use super::*;
 
 pub struct AskHn;
 pub struct ShowHn;
-pub struct FromMajorNewspaper;
-pub struct MentionsBigTech;
+pub struct LargeNewspaper;
+pub struct BigTech;
 
 impl Filter for AskHn {
     fn name(&self) -> &'static str {
@@ -25,7 +25,7 @@ impl Filter for ShowHn {
     }
 }
 
-impl Filter for FromMajorNewspaper {
+impl Filter for LargeNewspaper {
     fn name(&self) -> &'static str {
         "bignews"
     }
@@ -54,7 +54,7 @@ impl Filter for FromMajorNewspaper {
     }
 }
 
-impl Filter for MentionsBigTech {
+impl Filter for BigTech {
     fn name(&self) -> &'static str {
         "amfg"
     }
@@ -75,8 +75,8 @@ impl Filter for FilterKind {
         match self {
             Self::AskHn => AskHn.name(),
             Self::ShowHn => ShowHn.name(),
-            Self::FromMajorNewspaper => FromMajorNewspaper.name(),
-            Self::MentionsBigTech => MentionsBigTech.name(),
+            Self::LargeNewspaper => LargeNewspaper.name(),
+            Self::BigTech => BigTech.name(),
         }
     }
 
@@ -84,8 +84,8 @@ impl Filter for FilterKind {
         match self {
             Self::AskHn => AskHn.should_flag(story),
             Self::ShowHn => ShowHn.should_flag(story),
-            Self::FromMajorNewspaper => FromMajorNewspaper.should_flag(story),
-            Self::MentionsBigTech => MentionsBigTech.should_flag(story),
+            Self::LargeNewspaper => LargeNewspaper.should_flag(story),
+            Self::BigTech => BigTech.should_flag(story),
         }
     }
 }
@@ -99,12 +99,12 @@ mod tests {
         let news = "https://www.wsj.com/articles/reddit-claims-52-million-daily-users-revealing-a-key-figure-for-social-media-platforms-11606822200";
         let mut story = Story::random_url();
         story.kind = StoryKind::Url(news.to_string());
-        assert!(FromMajorNewspaper.should_flag(&story));
+        assert!(LargeNewspaper.should_flag(&story));
 
         let story = Story::random_url();
-        assert!(!FromMajorNewspaper.should_flag(&story));
+        assert!(!LargeNewspaper.should_flag(&story));
 
         let story = Story::random_text();
-        assert!(!FromMajorNewspaper.should_flag(&story));
+        assert!(!LargeNewspaper.should_flag(&story));
     }
 }

@@ -23,14 +23,17 @@
 
 use {
     fallible_iterator::FallibleIterator,
-    rusqlite::{params, Connection, DatabaseName, NO_PARAMS},
+    rusqlite::{
+        params, Connection, DatabaseName, OptionalExtension, NO_PARAMS,
+    },
     std::{
+        convert::TryInto,
         path::Path,
         time::{SystemTime, UNIX_EPOCH},
     },
 };
 
-use crate::{conf, filters::Filter, hn, prelude::*};
+use crate::{conf, filter::Filter, hn, prelude::*};
 
 /// Creates sqlite connection to a file. If the file doesn't exist, creates
 /// necessary tables.
@@ -107,7 +110,7 @@ pub fn insert_filters(
 /// Given list of HN story ids, discards the ones we already store in db.
 pub fn only_new_stories(
     conn: &Connection,
-    fetched_ids: Vec<StoryId>,
+    fetched_ids: &[StoryId],
 ) -> Result<Vec<StoryId>> {
     if fetched_ids.is_empty() {
         log::warn!("No stories to deduplicate.");
@@ -124,18 +127,21 @@ pub fn only_new_stories(
 
     if stored_ids.is_empty() {
         log::debug!("No stored stories since story {}.", min_id);
-        return Ok(fetched_ids);
+        return Ok(fetched_ids.to_vec());
     }
 
     // `stored_ids` sorted ASC
     let latest_stored_id = stored_ids[stored_ids.len() - 1]; // can't be empty
 
-    let mut new_ids = fetched_ids;
-    new_ids.retain(|id| {
-        // `ids` newer than latest stored id will definitely be missing
-        // bin search returns err if an id is not present
-        *id > latest_stored_id || stored_ids.binary_search(id).is_err()
-    });
+    let new_ids = fetched_ids
+        .iter()
+        .copied()
+        .filter(|id| {
+            // `ids` newer than latest stored id will definitely be missing
+            // bin search returns err if an id is not present
+            *id > latest_stored_id || stored_ids.binary_search(id).is_err()
+        })
+        .collect();
 
     Ok(new_ids)
 }
@@ -145,6 +151,8 @@ pub fn select_story(
     conn: &Connection,
     story_id: StoryId,
 ) -> Result<Option<StoryWithFilters>> {
+    // quite unfortunate that we have to have this gigantic return type
+    // alternative is to implement [`From`] [`Row`] for [`StoryWithFilters`].
     let select_all_info = "
         SELECT s.id, s.title, s.url, s.archive_url, \
         sf.amfg, sf.askhn, sf.showhn, sf.bignews \
@@ -152,16 +160,42 @@ pub fn select_story(
         INNER JOIN story_filters AS sf ON s.id = sf.story_id \
         WHERE s.id = ? LIMIT 1
     ";
+    type RowData = (
+        StoryId,
+        String,
+        String,
+        Option<String>,
+        bool,
+        bool,
+        bool,
+        bool,
+    );
 
-    let mut stmt = conn
+    let story = conn
         .query_row(select_all_info, params![story_id], |row| {
-            log::trace!("row: {:?}", row);
+            let (id, title, url, archive_url, amfg, askhn, showhn, bignews): RowData
+             = row.try_into()?;
+
+            // only keeps filters which flagged the story
+            let filters = [
+                (amfg, FilterKind::BigTech),
+                (askhn, FilterKind::AskHn),
+                (showhn, FilterKind::ShowHn),
+                (bignews, FilterKind::LargeNewspaper),
+            ]
+            .iter()
+            .copied()
+            .filter_map(
+                |(applies, filter)| if applies { Some(filter) } else { None },
+            )
+            .collect();
+
             Ok(StoryWithFilters {
-                id: row.get(0)?,
-                title: row.get(1)?,
-                url: row.get(2)?,
-                archive_url: row.get(3)?,
-                filters: vec![],
+                id,
+                title,
+                url,
+                archive_url,
+                filters,
             })
         })
         .optional()?;
@@ -248,15 +282,21 @@ fn insert_story(conn: &Connection, story: Story) -> Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
+
+    pub fn test_conn() -> Result<Connection> {
+        let conn = Connection::open_in_memory()?;
+        create_table_stories(&conn)?;
+        create_table_story_filters(&conn)?;
+        Ok(conn)
+    }
 
     #[test]
     fn it_returns_only_new_stories() -> Result<()> {
-        let conn = Connection::open_in_memory()?;
-        create_table_stories(&conn)?;
+        let conn = test_conn()?;
 
-        assert_eq!(vec![1, 2, 3], only_new_stories(&conn, vec![1, 2, 3])?);
+        assert_eq!(vec![1, 2, 3], only_new_stories(&conn, &vec![1, 2, 3])?);
 
         let story1 = Story::random_url();
         let story1_id = story1.id;
@@ -268,101 +308,62 @@ mod tests {
 
         assert_eq!(
             vec![1],
-            only_new_stories(&conn, vec![1, story1_id, story2_id])?
+            only_new_stories(&conn, &vec![1, story1_id, story2_id])?
         );
 
         Ok(())
     }
 
     #[test]
-    fn it_inserts_and_selects_story_filters() -> Result<()> {
-        let default_limit = 10;
+    fn it_selects_story() -> Result<()> {
+        let conn = test_conn()?;
 
-        let conn = Connection::open_in_memory()?;
-        create_table_stories(&conn)?;
-        create_table_story_filters(&conn)?;
-
-        let story0 = Story::random_url();
-        let story1 = Story::random_url();
-        let story2 = Story::random_url();
-        let story3 = Story::random_url();
-
-        let stories = vec![
-            story0.clone(),
-            story1.clone(),
-            story2.clone(),
-            story3.clone(),
+        let stories = &[
+            (
+                Story::random_url(),
+                vec![FilterKind::AskHn, FilterKind::ShowHn],
+            ),
+            (Story::random_url(), vec![FilterKind::LargeNewspaper]),
+            (Story::random_url(), vec![]),
         ];
-        insert_stories(&conn, stories)?;
+        insert_test_data(&conn, stories)?;
+
+        // for each story, gets it from db and asserts it equals the test data
+        for (story, filters) in stories {
+            let db_story = select_story(&conn, story.id)?.unwrap();
+
+            assert_eq!(story.id, db_story.id);
+            assert_eq!(&story.title, &db_story.title);
+
+            assert_eq!(filters.len(), db_story.filters.len());
+            for filter in filters {
+                assert!(db_story.filters.contains(filter));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Inserts given stories + filters to the database.
+    pub fn insert_test_data(
+        conn: &Connection,
+        stories: &[(Story, Vec<FilterKind>)],
+    ) -> Result<()> {
+        insert_stories(
+            &conn,
+            stories
+                .iter()
+                .map(|(story, _)| story.clone())
+                .collect::<Vec<_>>(),
+        )?;
 
         insert_filters(
             &conn,
-            &[
-                (story0.id, vec![FilterKind::AskHn, FilterKind::ShowHn]),
-                (story1.id, vec![FilterKind::FromMajorNewspaper]),
-                (story2.id, vec![]),
-                (story3.id, vec![FilterKind::AskHn]),
-            ],
+            &stories
+                .iter()
+                .map(|(story, filters)| (story.id, filters.clone()))
+                .collect::<Vec<_>>(),
         )?;
-
-        let ask_hn_stories = select_stories(
-            &conn,
-            &[Modifier::With(FilterKind::AskHn)],
-            default_limit,
-        )?;
-        assert_eq!(2, ask_hn_stories.len());
-        assert!(ask_hn_stories.contains(&story0));
-        assert!(ask_hn_stories.contains(&story3));
-
-        let limit_to_one = 1;
-        let limited_stories = select_stories(
-            &conn,
-            &[Modifier::With(FilterKind::AskHn)],
-            limit_to_one,
-        )?;
-        assert_eq!(1, limited_stories.len());
-
-        let ask_show_hn_stories = select_stories(
-            &conn,
-            &[
-                Modifier::With(FilterKind::AskHn),
-                Modifier::With(FilterKind::ShowHn),
-            ],
-            default_limit,
-        )?;
-        assert_eq!(1, ask_show_hn_stories.len());
-        assert!(ask_show_hn_stories.contains(&story0));
-
-        let amfg_stories = select_stories(
-            &conn,
-            &[
-                Modifier::With(FilterKind::AskHn),
-                Modifier::With(FilterKind::ShowHn),
-            ],
-            default_limit,
-        )?;
-        assert!(amfg_stories.is_empty());
-
-        let no_bignews_stories = select_stories(
-            &conn,
-            &[Modifier::Without(FilterKind::FromMajorNewspaper)],
-            default_limit,
-        )?;
-        assert_eq!(3, amfg_stories.len());
-        assert!(ask_show_hn_stories.contains(&story0));
-        assert!(ask_show_hn_stories.contains(&story2));
-        assert!(ask_show_hn_stories.contains(&story3));
-
-        let ask_hn_not_shown_stories = select_stories(
-            &conn,
-            &[
-                Modifier::With(FilterKind::AskHn),
-                Modifier::Without(FilterKind::ShowHn),
-            ],
-            default_limit,
-        )?;
-        assert_eq!(1, ask_hn_not_shown_stories.len());
-        assert!(ask_hn_not_shown_stories.contains(&story3));
 
         Ok(())
     }

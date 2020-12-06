@@ -1,16 +1,22 @@
-use serde::{Deserialize, Serialize};
+pub mod impls;
+
+pub use impls::*;
+
+use {
+    serde::{Deserialize, Serialize},
+    std::collections::HashSet,
+};
 
 pub type StoryId = i64;
 pub type StoryFilters = (StoryId, Vec<FilterKind>);
 
-/// Supported filters, for specifics see [`filters::impls`] module.
-// TODO(https://github.com/rust-lang/rust/issues/27747): Impl [`std::slice::Join`]
-#[derive(Copy, Clone, Debug, PartialEq)]
+/// Supported filters, for specifics see [`filter::impls`] module.
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
 pub enum FilterKind {
     AskHn,
     ShowHn,
-    FromMajorNewspaper,
-    MentionsBigTech,
+    LargeNewspaper,
+    BigTech,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -39,18 +45,19 @@ pub enum StoryKind {
 
 /// Story information which we retrieve from the database. A join query on both
 /// `stories` and `story_filters` tables.
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct StoryWithFilters {
     pub id: StoryId,
     pub title: String,
     pub url: String,
     pub archive_url: Option<String>,
-    pub filters: Vec<FilterKind>,
+    pub filters: HashSet<FilterKind>,
 }
 
 /// Determines whether we are interested in stories matching or not matching
 /// given filter.
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Modifier {
     With(FilterKind),
     Without(FilterKind),
@@ -64,6 +71,25 @@ mod tests {
 
     use super::*;
 
+    impl StoryWithFilters {
+        pub fn random(filters: Vec<FilterKind>) -> Self {
+            let Story {
+                id,
+                title,
+                archive_url,
+                ..
+            } = Story::random_url();
+
+            Self {
+                id,
+                title,
+                url: random_url(),
+                archive_url,
+                filters: filters.into_iter().collect(),
+            }
+        }
+    }
+
     impl Story {
         pub fn random_url() -> Self {
             let mut gen = Generator::default();
@@ -71,11 +97,7 @@ mod tests {
                 id: random::<i64>().abs(),
                 title: gen.next().unwrap(),
                 archive_url: None,
-                kind: StoryKind::Url(format!(
-                    "https://{}.com/random/{}",
-                    gen.next().unwrap(),
-                    gen.next().unwrap()
-                )),
+                kind: StoryKind::Url(random_url()),
             }
         }
 
@@ -88,5 +110,14 @@ mod tests {
                 kind: StoryKind::Text(gen.next().unwrap()),
             }
         }
+    }
+
+    fn random_url() -> String {
+        let mut gen = Generator::default();
+        format!(
+            "https://{}.com/random/{}",
+            gen.next().unwrap(),
+            gen.next().unwrap()
+        )
     }
 }
