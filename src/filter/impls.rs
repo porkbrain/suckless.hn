@@ -37,6 +37,9 @@ impl Filter for LargeNewspaper {
                 "(?:www\\.)?", // can start with www
                 "(?:", // start non-capturing group of websites
                 "bbc\\.com|",
+                "latimes\\.com|",
+                "bbc\\.co\\.uk|",
+                "spectator\\.co\\.uk|",
                 "wsj\\.com|",
                 "bloomberg\\.com|",
                 "vice\\.com|",

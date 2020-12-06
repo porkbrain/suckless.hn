@@ -22,7 +22,8 @@ async fn main() -> Result<()> {
 
     log::info!("Fetching top stories list...");
     let top_stories = hn::fetch_top_stories().await?;
-    let new_stories = fetch_new_stories(&conn, &conf, &top_stories).await?;
+    let new_stories =
+        fetch_new_stories(&conn, &top_stories, conf.new_stories_limit).await?;
 
     log::info!("Applying Suckless Filters™...");
     let new_stories_filters = filter::for_stories(&new_stories);
@@ -32,7 +33,7 @@ async fn main() -> Result<()> {
 
     log::info!("Generating html pages and uploading to S3...");
     let engine = html::Template::new()?;
-    let pages = page::populate(&conn, top_stories, conf.new_stories_limit);
+    let pages = page::populate(&conn, top_stories, conf.stories_per_page);
 
     let jobs: Vec<_> = pages
         .into_iter()
@@ -50,11 +51,15 @@ async fn main() -> Result<()> {
 // Puts together hn fetching, db queries and archive fetching.
 async fn fetch_new_stories(
     conn: &Connection,
-    conf: &conf::Conf,
     top_stories: &[StoryId],
+    new_stories_limit: usize,
 ) -> Result<Vec<Story>> {
+    log::debug!(
+        "Checking how many out of the {} top stories are already stored.",
+        top_stories.len()
+    );
     let mut new_stories_ids = db::only_new_stories(&conn, top_stories)?;
-    new_stories_ids.truncate(conf.new_stories_limit);
+    new_stories_ids.truncate(new_stories_limit);
 
     log::debug!("Fetching {} new stories...", new_stories_ids.len());
     let mut stories = hn::fetch_stories(&new_stories_ids).await?;

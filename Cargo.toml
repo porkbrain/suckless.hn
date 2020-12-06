@@ -14,6 +14,10 @@ lazy_static = "1.4"
 log = "0.4"
 regex = "1.4"
 reqwest = { version = "0.10", features = ["json"] }
+# we don't verify ssl because aws s3 ssl only applies to bucket names which
+# don't contain dots in their name as the cert is not wildcarded to arbitrary
+# numbers of subdomains
+rust-s3 = { version = "0.26", features = ["no-verify-ssl"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 # not 0.3 due to https://github.com/seanmonstar/reqwest/issues/1060

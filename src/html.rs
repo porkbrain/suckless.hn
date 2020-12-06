@@ -30,6 +30,7 @@ impl Template {
     /// template.
     pub fn render(&self, page: &Page) -> Result<String> {
         let json = json!({
+            "name": page.name(),
             "stories": page.stories(),
         });
 
@@ -50,19 +51,27 @@ mod tests {
         let engine = Template::new()?;
         let conn = db::tests::test_conn()?;
 
-        let story = Story::random_url();
-        let title = story.title.clone();
-        let stories = &[(story, vec![FilterKind::AskHn])];
+        let mut story1 = Story::random_url();
+        story1.kind = StoryKind::Url("https://porkbrain.com".to_string());
+        story1.title = "Every Model Learned by Gradient Descent".to_string();
+        let mut story2 = Story::random_url();
+        story2.title = "LinkedIn’s Alternate Universe".to_string();
+        story2.archive_url = Some("https://example.com".to_string());
+
+        let stories = &[(story1.clone(), vec![]), (story2.clone(), vec![])];
         let ids = stories.iter().map(|(story, _)| story.id).collect();
         db::tests::insert_test_data(&conn, stories)?;
 
-        let pages = page::populate(&conn, ids, 1);
+        let pages = page::populate(&conn, ids, 5);
         let ask_hn_page =
-            pages.into_iter().find(|p| p.name() == "+askhn").unwrap();
+            pages.into_iter().find(|p| p.name() == "+all").unwrap();
 
-        let html = engine.render(ask_hn_page)?;
+        let html = engine.render(&ask_hn_page)?;
         println!("{}", html);
-        assert!(html.contains(&title));
+
+        assert!(html.contains(&story1.title));
+        assert!(html.contains(&story2.title));
+        assert!(html.contains(&story2.archive_url.unwrap()));
 
         Ok(())
     }

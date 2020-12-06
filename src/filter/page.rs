@@ -2,7 +2,10 @@
 //! database. For each page we have defined we keep a reference to stories which
 //! are flagged.
 
-use {rusqlite::Connection, std::rc::Rc};
+use {
+    rusqlite::Connection,
+    std::{rc::Rc, io},
+};
 
 use crate::{conf, db, html::Template, prelude::*};
 
@@ -103,9 +106,23 @@ impl Page {
     ) -> Result<()> {
         let html = html_engine.render(&self)?;
 
-        // TODO: Upload to s3.
+        log::trace!("Uploading page {}...", self.name());
+        let (_, code) = conf
+            .bucket
+            .put_object_with_content_type(
+                self.name(),
+                html.as_bytes(),
+                "text/html",
+            )
+            .await?;
 
-        Ok(())
+        if code != 200 {
+            log::error!("Cannot upload page {}", self.name());
+            // hack to return error
+            Err(Box::new(io::Error::from_raw_os_error(1)))
+        } else {
+            Ok(())
+        }
     }
 
     fn new(modifiers: &'static [Modifier]) -> Self {

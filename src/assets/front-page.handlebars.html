@@ -6,6 +6,7 @@
     <meta name="description" content="Hacker News minus content you don't like.">
     <meta name="keywords" content="suckless,hacker news, hackernews, hn, news">
     <link rel="stylesheet" href="static/style.css">
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
 
     <title>suckless.hn</title>
 </head>
@@ -13,27 +14,33 @@
     <section class="stories">
         {{#each stories}}
             <div class="story">
-                <span class="title">
+                <div class="title">
                     {{#if url}}
-                        <a href="{{url}}">{{title}}</a>
+                    <a href="{{url}}">{{title}}</a>
                     {{else}}
-                        <a href="https://news.ycombinator.com/item?id={{id}}">{{title}}</a>
+                    <a href="https://news.ycombinator.com/item?id={{id}}">{{title}}</a>
                     {{/if}}
-                </span>
-                <span class="comments-link">
-                    <a href="https://news.ycombinator.com/item?id={{id}}">read comments</a>
-                </span>
-                {{#if archive_url}}
-                    <span class="archive-link">
-                        <a href="{{archive_url}}">view at wayback machine</a>
+                </div>
+                <div class="links">
+                    <span>
+                        <a href="https://news.ycombinator.com/item?id={{id}}">comments</a>
                     </span>
-                {{/if}}
+                    {{#if archiveUrl}}
+                    <span>
+                        <a href="{{archiveUrl}}">archived</a>
+                    </span>
+                    {{/if}}
+                </div>
             </div>
+        {{else}}
+            <h3>No matching stories :(</h3>
         {{/each}}
     </section>
 
-    <footer>
-        TODO: active filters, about page
+    <footer class="footer">
+        <h3>suckless.hn/{{name}}</h3>
+        <a href="https://github.com/bausano/suckless.hn#sucklesshn">about</a>
+        <a href="https://github.com/bausano/suckless.hn#suckless-filters">browse filters</a>
     </footer>
 </body>
 </html>
