@@ -1,16 +1,25 @@
+/*
+    Default theme uploaded at /static/dark.css
+
+    Colour scheme:
+    * #ffcb6b
+    * #a6accd
+    * #464b5d
+    * #0f111a
+*/
+
 body {
+    background-color: #0f111a;
     margin: 40px auto;
     max-width: 800px;
     line-height: 1.6;
-    color: #444;
     padding: 0 10px;
+    color: #464b5d;
 }
 
 h1, h2, h3 {
+    color: #ffcb6b;
     line-height: 1.2;
-}
-
-h1 {
 }
 
 footer {
@@ -22,12 +31,12 @@ div.story {
 }
 
 div.title a:link {
-    color: #000;
+    color: #a6accd;
     text-decoration: none;
 }
 
 div.title a:visited {
-    color: #888;
+    color: #464b5d;
 }
 
 div.links {
@@ -35,10 +44,20 @@ div.links {
 }
 
 div.links a {
-    color: #666;
+    color: #464b5d;
     text-decoration: none;
 }
 
 div.links a:hover {
     text-decoration: underline;
+}
+
+footer .links a {
+    color: #a6accd;
+}
+
+@media only screen and (min-width: 1024px) {
+    div.story {
+        margin-bottom: 0.75rem;
+    }
 }

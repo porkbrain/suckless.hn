@@ -1,6 +1,6 @@
 use {
     serde::Serializer,
-    std::{cmp::Ordering, fmt, result},
+    std::{borrow::Cow, cmp::Ordering, fmt, result},
 };
 
 use {super::*, crate::filter::Filter};
@@ -83,5 +83,30 @@ impl Ord for Modifier {
 impl PartialOrd for Modifier {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+impl Theme {
+    /// Given object name, returns the path where should the object be stored
+    /// in the S3.
+    pub fn object_path<'a>(&self, object_name: &'a str) -> Cow<'a, str> {
+        match self {
+            // default view is dark hence path prefix
+            Self::Dark => Cow::Borrowed(object_name),
+            Self::Light => Cow::Owned(format!("light/{}", object_name)),
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Dark => "dark",
+            Self::Light => "light",
+        }
+    }
+}
+
+impl fmt::Display for Theme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }

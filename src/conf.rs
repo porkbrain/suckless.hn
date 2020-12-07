@@ -15,6 +15,9 @@ pub struct Conf {
     pub new_stories_limit: usize,
     /// How many stories can a page display at most.
     pub stories_per_page: usize,
+    /// If set to true, we won't upload the html to S3 but instead store it into
+    /// "pages" directory.
+    pub store_html_locally: bool,
 }
 
 impl Conf {
@@ -52,6 +55,14 @@ impl Conf {
             .unwrap_or(defaults::STORIES_PER_PAGE);
         log::debug!("{}={:?}", vars::STORIES_PER_PAGE, stories_per_page);
 
+        let store_html_locally = env::var(vars::STORE_HTML_LOCALLY)
+            .map(|s| match s.trim() {
+                "ok" | "yes" | "1" | "true" => true,
+                _ => false,
+            })
+            .unwrap_or(false);
+        log::debug!("{}={:?}", vars::STORE_HTML_LOCALLY, store_html_locally);
+
         let content_cache_header = env::var(vars::CONTENT_CACHE_HEADER)
             .ok()
             .unwrap_or_else(|| defaults::CONTENT_CACHE_HEADER.to_string());
@@ -84,10 +95,11 @@ impl Conf {
         bucket.add_header("Content-Cache", &content_cache_header);
 
         Self {
-            sqlite_file,
-            bucket,
             backups_dir,
+            bucket,
             new_stories_limit,
+            sqlite_file,
+            store_html_locally,
             stories_per_page,
         }
     }
@@ -97,6 +109,7 @@ mod vars {
     pub const SQLITE_FILE: &str = "SQLITE_FILE";
     pub const BUCKET_NAME: &str = "BUCKET_NAME";
     pub const BUCKET_REGION: &str = "BUCKET_REGION";
+    pub const STORE_HTML_LOCALLY: &str = "STORE_HTML_LOCALLY"; // opt
     pub const BACKUPS_DIR: &str = "BACKUPS_DIR"; // opt
     pub const NEW_STORIES_LIMIT: &str = "NEW_STORIES_LIMIT"; // opt
     pub const STORIES_PER_PAGE: &str = "STORIES_PER_PAGE"; // opt

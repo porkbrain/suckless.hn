@@ -1,8 +1,9 @@
 # suckless.hn
-TODO: waiting to bug fix at https://github.com/durch/rust-s3/issues/148
 TODO: high level tldr
 
-* Why isn't this an app into which I login as HN user and you [hide][hn-hide-story] stories on my behalf?
+TODO: Waiting for bug fix at https://github.com/durch/rust-s3/issues/148
+
+* Why doesn't this instead exist as an app into which I login as an HN user and it [hides][hn-hide-story] stories on my behalf?
 
     As a user I wouldn't login into some random app. As a developer I don't want to manage user credentials.
 

@@ -1,0 +1,61 @@
+/*
+    Alternative theme for /light/static/light.css
+
+    Colour scheme:
+    * white
+    * #888
+    * #666
+    * #000
+*/
+
+body {
+    margin: 40px auto;
+    max-width: 800px;
+    line-height: 1.6;
+    color: #666;
+    padding: 0 10px;
+}
+
+h1, h2, h3 {
+    line-height: 1.2;
+}
+
+footer {
+    margin-top: 5vh;
+}
+
+div.story {
+    margin-bottom: 0.5rem;
+}
+
+div.title a:link {
+    color: #000;
+    text-decoration: none;
+}
+
+div.title a:visited {
+    color: #888;
+}
+
+div.links {
+    font-size: 14px;
+}
+
+div.links a {
+    color: #666;
+    text-decoration: none;
+}
+
+div.links a:hover {
+    text-decoration: underline;
+}
+
+footer .links a {
+    color: #666;
+}
+
+@media only screen and (min-width: 1024px) {
+    div.story {
+        margin-bottom: 0.75rem;
+    }
+}

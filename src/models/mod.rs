@@ -63,6 +63,13 @@ pub enum Modifier {
     Without(FilterKind),
 }
 
+/// We support different themes.
+#[derive(Copy, Clone)]
+pub enum Theme {
+    Dark,
+    Light,
+}
+
 #[cfg(test)]
 mod tests {
     //! Implement method factory methods used by other tests.

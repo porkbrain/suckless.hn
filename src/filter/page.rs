@@ -4,7 +4,8 @@
 
 use {
     rusqlite::Connection,
-    std::{rc::Rc, io},
+    std::{io, rc::Rc},
+    tokio::fs,
 };
 
 use crate::{conf, db, html::Template, prelude::*};
@@ -98,30 +99,63 @@ impl Page {
         self.stories.len()
     }
 
-    /// Compiles the html and uploads the page to S3 bucket.
+    /// Compiles and uploads pages for both themes.
     pub async fn upload(
         self,
         conf: &conf::Conf,
         html_engine: &Template,
     ) -> Result<()> {
-        let html = html_engine.render(&self)?;
+        let jobs = vec![
+            self.upload_theme(conf, html_engine, Theme::Dark),
+            self.upload_theme(conf, html_engine, Theme::Light),
+        ];
 
-        log::trace!("Uploading page {}...", self.name());
-        let (_, code) = conf
-            .bucket
-            .put_object_with_content_type(
-                self.name(),
-                html.as_bytes(),
-                "text/html",
-            )
-            .await?;
+        for job in futures::future::join_all(jobs).await {
+            job?;
+        }
 
-        if code != 200 {
-            log::error!("Cannot upload page {}", self.name());
-            // hack to return error
-            Err(Box::new(io::Error::from_raw_os_error(1)))
-        } else {
+        Ok(())
+    }
+
+    /// Compiles the html and uploads the page to S3 bucket.
+    async fn upload_theme(
+        &self,
+        conf: &conf::Conf,
+        html_engine: &Template,
+        theme: Theme,
+    ) -> Result<()> {
+        let html = html_engine.render(&self, theme)?;
+
+        if conf.store_html_locally {
+            let file_path = format!("pages/{}/{}.html", theme, self.name());
+
+            log::trace!("Storing page {} ({})...", file_path, theme);
+            fs::write(file_path, html.as_bytes()).await?;
             Ok(())
+        } else {
+            let object_path = theme.object_path(self.name());
+
+            log::trace!("Uploading page {} ({})...", object_path, theme);
+            let (_, code) = conf
+                .bucket
+                .put_object_with_content_type(
+                    object_path.as_ref(),
+                    html.as_bytes(),
+                    "text/html",
+                )
+                .await?;
+
+            if code != 200 {
+                log::error!(
+                    "Cannot upload page {} (code {})",
+                    self.name(),
+                    code
+                );
+                // hack to return error
+                Err(Box::new(io::Error::from_raw_os_error(1)))
+            } else {
+                Ok(())
+            }
         }
     }
 
