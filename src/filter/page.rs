@@ -84,13 +84,39 @@ impl Page {
     /// If the story was flagged by filters this page is happy with, push it to
     /// the list of stories we render for this page.
     pub fn push(&mut self, story: Rc<StoryWithFilters>) {
-        let belongs_to_page =
-            self.modifiers.iter().all(|modifier| match modifier {
-                Modifier::With(filter) => story.filters.contains(filter),
-                Modifier::Without(filter) => !story.filters.contains(filter),
-            });
+        // all "-" modifiers are conjunctive
+        let removed_from_page = || {
+            self.modifiers
+                .iter()
+                .filter_map(|modifier| match modifier {
+                    Modifier::Without(filter) => Some(filter),
+                    Modifier::With(_) => None,
+                })
+                .any(|filter| story.filters.contains(filter))
+        };
 
-        if belongs_to_page {
+        // all "+" modifiers are disjunctive
+        let included_in_page = || {
+            let mut plus_modifiers = self
+                .modifiers
+                .iter()
+                .filter_map(|modifier| match modifier {
+                    Modifier::With(filter) => Some(filter),
+                    Modifier::Without(_) => None,
+                })
+                .peekable();
+
+            if plus_modifiers.peek().is_some() {
+                // includes only stories which have at least one of the "+"
+                // modifier filter
+                plus_modifiers.any(|filter| story.filters.contains(filter))
+            } else {
+                // if there's no "+" modifier, include all stories
+                true
+            }
+        };
+
+        if !removed_from_page() && included_in_page() {
             self.stories.push(story);
         }
     }
@@ -269,6 +295,17 @@ mod tests {
         default_page.push(Rc::clone(&show_hn_story));
         assert_eq!(2, default_page.stories.len());
         assert_eq!("-amfg-bignews", default_page.name());
+
+        let mut ask_show_hn_page = Page::ask_show_hn();
+        ask_show_hn_page.push(Rc::clone(&empty_story));
+        assert!(ask_show_hn_page.stories.is_empty());
+        ask_show_hn_page.push(Rc::clone(&amfg_bignews_story));
+        assert!(ask_show_hn_page.stories.is_empty());
+        ask_show_hn_page.push(Rc::clone(&show_hn_story));
+        assert!(!ask_show_hn_page.stories.is_empty());
+        ask_show_hn_page.push(Rc::clone(&ask_hn_story));
+        assert_eq!(2, ask_show_hn_page.stories.len());
+        assert_eq!("+askhn+showhn", ask_show_hn_page.name());
     }
 
     #[test]

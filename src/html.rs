@@ -70,7 +70,6 @@ mod tests {
         let ask_hn_page =
             pages.into_iter().find(|p| p.name() == "+all").unwrap();
 
-        let dark = true;
         let dark_html = engine.render(&ask_hn_page, Theme::Dark)?;
 
         assert!(dark_html.contains(&story1.title));
