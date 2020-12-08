@@ -9,7 +9,7 @@ Some stories on [HN][hn] are frustrating and time consuming for dubious value. I
 
 * Can I have custom filters configurable from a UI?
 
-    Out of scope. Create an issue or submit a PR if there's a filter you wish to use.
+    Out of scope. [Create an issue][create-issue] or submit a PR if there's a filter you wish to use.
 
 * Will you change a filter I use without my knowledge?
 
@@ -20,11 +20,11 @@ Some stories on [HN][hn] are frustrating and time consuming for dubious value. I
     I prefer a set of transparent and easily editable rules to decide what I don't see. Plus that's easier.
 
 ## Suckless Filters™
-A filter is given story metadata and flags the story if it passes the filter. Feel free to create an issue for any missing but useful filter.
+A filter is given a story data and flags the story if it passes the filter. Feel free to [create an issue][create-issue] for any missing but useful filter.
 
 Each filter has a two landing pages. One with only stories which were flagged, one with anything but. This is decided by two modifiers: `+` and `-`. For example to only see stories from large newspapers visit [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews).
 
-There are also groups of filters. For example [`https://suckless.hn/-amgf-bignews`](https://suckless.hn/-amgf-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default view on the [homepage][homepage].
+There are also groups of filters. For example [`https://suckless.hn/-amfg-bignews`](https://suckless.hn/-amfg-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default view on the [homepage][homepage].
 
 ### List
 **List of implemented filters:**
@@ -34,10 +34,10 @@ There are also groups of filters. For example [`https://suckless.hn/-amgf-bignew
 
 * [`+bignews`](https://suckless.hn/+bignews)/[`-bignews`](https://suckless.hn/-bignews) flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC, Forbes, Spectator, LA Times and NY Times. More large news may be added later. Any general news website which has *~60* submissions (2 pages) in the past year falls into this category. HN search query: `https://hn.algolia.com/?dateRange=pastYear&page=2&prefix=true&sort=byPopularity&type=story&query=${DOMAIN}`.
 
-* [`+amgf`](https://suckless.hn/+amgf)/[`-amgf`](https://suckless.hn/-amgf) flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
+* [`+amfg`](https://suckless.hn/+amfg)/[`-amfg`](https://suckless.hn/-amfg) flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Most of the time the submissions are scandalous and comment sections low entropy but addictive.
 
 **List of filter groups:**
-* [suckless.hn/`-amgf-bignews`](https://suckless.hn/-amgf-bignews) (default)
+* [suckless.hn/`-amfg-bignews`](https://suckless.hn/-amfg-bignews) (default)
 * [suckless.hn/`+askhn+showhn`](https://suckless.hn/+askhn+showhn)
 
 Filters in a group are alphabetically sorted ASC.
@@ -45,7 +45,7 @@ Filters in a group are alphabetically sorted ASC.
 ## Design
 The binary is executed periodically (~ 30 min). I run it on my [rasbpi 4][pi-4]. The main idea is that each generated page is an S3 object, therefore we don't need to provision a server.
 
-[`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other metadata (timestamp of insertion, submission title, url, which filters it passed).
+[`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other data (timestamp of insertion, submission title, url, which filters it passed).
 
 The endpoint to query top stories on HN is [https://hacker-news.firebaseio.com/v0/topstories.json][hn-topstories]. We download stories which we haven't checked before. The data about a story is available via [item endpoint][hn-item].
 
@@ -107,3 +107,4 @@ We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
 [s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type
 [pi-crontab]: https://www.raspberrypi.org/documentation/linux/usage/cron.md
 [hn]: https://news.ycombinator.com/news
+[create-issue]: https://github.com/bausano/suckless.hn/issues/new
