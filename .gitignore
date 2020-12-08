@@ -1,4 +1,5 @@
 /target
 .env*
+!.env*.example
 /test_db
 /pages
