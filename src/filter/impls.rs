@@ -36,16 +36,17 @@ impl Filter for LargeNewspaper {
                 "https?://", // doesn't have to be tls
                 "(?:www\\.)?", // can start with www
                 "(?:", // start non-capturing group of websites
-                "bbc\\.com|",
-                "latimes\\.com|",
                 "bbc\\.co\\.uk|",
-                "spectator\\.co\\.uk|",
-                "wsj\\.com|",
+                "bbc\\.com|",
                 "bloomberg\\.com|",
-                "vice\\.com|",
-                "theguardian\\.com|",
                 "cnbc\\.com|",
-                "forbes\\.com",
+                "forbes\\.com|",
+                "latimes\\.com|",
+                "nytimes\\.com|",
+                "spectator\\.co\\.uk|",
+                "theguardian\\.com|",
+                "vice\\.com|",
+                "wsj\\.com",
                 ")"
             )).expect("Invalid newspaper website regex");
         }

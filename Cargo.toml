@@ -1,6 +1,6 @@
 [package]
 name = "suckless_hn"
-version = "0.1.0"
+version = "1.0"
 authors = ["Michael <michael@porkbrain.com>"]
 edition = "2018"
 
