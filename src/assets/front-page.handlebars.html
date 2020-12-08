@@ -27,7 +27,14 @@
                 </div>
                 <div class="links">
                     <span>
-                        <a href="https://news.ycombinator.com/item?id={{id}}">comments</a>
+                        <!-- I prefer to open comments in a new tab because
+                            otherwise I end up just browsing HN. -->
+                        <a
+                            href="https://news.ycombinator.com/item?id={{id}}"
+                            target="_blank"
+                        >
+                            comments
+                        </a>
                     </span>
                     {{#if archiveUrl}}
                     <span>
@@ -43,21 +50,23 @@
 
     <footer class="footer">
         <h3>suckless.hn/{{name}}</h3>
-        <ul class="links">
-            <li>
+        <div class="links">
+            <span>
                 <a href="https://github.com/bausano/suckless.hn#sucklesshn">about</a>
-            </li>
-            <li>
+            </span>
+            ,
+            <span>
                 <a href="https://github.com/bausano/suckless.hn#suckless-filters">browse filters</a>
-            </li>
-            <li>
+            </span>
+            ,
+            <span>
                 {{#if dark}}
                 <a href="/light/{{name}}">light mode</a>
                 {{else}}
                 <a href="/{{name}}">dark mode</a>
                 {{/if}}
-            </li>
-        </ul>
+            </span>
+        </div>
     </footer>
 </body>
 </html>

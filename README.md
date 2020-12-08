@@ -1,6 +1,8 @@
 # suckless.hn
 TODO: high level tldr
 
+TODO: crontab settings
+
 * Why doesn't this instead exist as an app into which I login as an HN user and it [hides][hn-hide-story] stories on my behalf?
 
     As a user I wouldn't login into some random app. As a developer I don't want to manage user credentials.

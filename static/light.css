@@ -17,6 +17,7 @@ body {
 }
 
 h1, h2, h3 {
+    color: #000;
     line-height: 1.2;
 }
 
@@ -25,7 +26,7 @@ footer {
 }
 
 div.story {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 div.title a:link {
@@ -52,10 +53,4 @@ div.links a:hover {
 
 footer .links a {
     color: #666;
-}
-
-@media only screen and (min-width: 1024px) {
-    div.story {
-        margin-bottom: 0.75rem;
-    }
 }

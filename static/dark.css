@@ -3,8 +3,8 @@
 
     Colour scheme:
     * #ffcb6b
-    * #a6accd
-    * #464b5d
+    * #b7bdde
+    * #575c6e
     * #0f111a
 */
 
@@ -14,7 +14,7 @@ body {
     max-width: 800px;
     line-height: 1.6;
     padding: 0 10px;
-    color: #464b5d;
+    color: #575c6e;
 }
 
 h1, h2, h3 {
@@ -27,16 +27,24 @@ footer {
 }
 
 div.story {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    position: relative;
 }
 
 div.title a:link {
-    color: #a6accd;
+    color: #b7bdde;
     text-decoration: none;
 }
 
 div.title a:visited {
-    color: #464b5d;
+    color: #575c6e;
+}
+
+div.title::before {
+    content: '—';
+    position: absolute;
+    color: #575c6e;
+    top: -22px;
 }
 
 div.links {
@@ -44,7 +52,7 @@ div.links {
 }
 
 div.links a {
-    color: #464b5d;
+    color: #575c6e;
     text-decoration: none;
 }
 
@@ -53,11 +61,5 @@ div.links a:hover {
 }
 
 footer .links a {
-    color: #a6accd;
-}
-
-@media only screen and (min-width: 1024px) {
-    div.story {
-        margin-bottom: 0.75rem;
-    }
+    color: #b7bdde;
 }

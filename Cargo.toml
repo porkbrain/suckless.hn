@@ -21,7 +21,7 @@ rust-s3 = { version = "0.27.0-beta5", features = ["no-verify-ssl"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 # not 0.3 due to https://github.com/seanmonstar/reqwest/issues/1060
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "0.2", features = ["fs", "rt-core", "macros"] }
 
 [dependencies.rusqlite]
 version = "0.24"
