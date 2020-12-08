@@ -92,7 +92,7 @@ impl Conf {
 
         let mut bucket = Bucket::new(&bucket_name, bucket_region, creds)
             .expect("Cannot create bucket handle");
-        bucket.add_header("Content-Cache", &content_cache_header);
+        bucket.add_header("Cache-Control", &content_cache_header);
 
         Self {
             backups_dir,

@@ -1,8 +1,6 @@
 # suckless.hn
 TODO: high level tldr
 
-TODO: crontab settings
-
 * Why doesn't this instead exist as an app into which I login as an HN user and it [hides][hn-hide-story] stories on my behalf?
 
     As a user I wouldn't login into some random app. As a developer I don't want to manage user credentials.
@@ -30,11 +28,15 @@ Each filter has a two landing pages. One with only stories which were flagged, o
 
 There are also groups of filters. For example [`https://suckless.hn/-amgf-bignews`](https://suckless.hn/-amgf-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default view on the [homepage][homepage].
 
+### List
 **List of implemented filters:**
-* `askhn` flags "Ask HN" titles
-* `showhn` flags "Show HN" titles
-* `bignews` flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC and Forbes.
-* `amgf` flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
+* [`+askhn`](https://suckless.hn/+askhn)/[`-askhn`]()https://suckless.hn/-askhn flags "Ask HN" titles
+
+* [`+showhn`](https://suckless.hn/+showhn)/[`-showhn`](https://suckless.hn/-showhn) flags "Show HN" titles
+
+* [`+bignews`](https://suckless.hn/+bignews)/[`-bignews`]https://suckless.hn/-bignews() flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC and Forbes.
+
+* [`+amgf`](https://suckless.hn/+amgf)/[`-amgf`]() https://suckless.hn/-amgfflags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Too controversial.
 
 **List of filter groups:**
 * [suckless.hn/`-amgf-bignews`](https://suckless.hn/-amgf-bignews) (default)
@@ -43,7 +45,7 @@ There are also groups of filters. For example [`https://suckless.hn/-amgf-bignew
 Filters in a group are alphabetically sorted ASC.
 
 ## Design
-The binary is executed periodically (~ 30 min). (I run it on my rasbpi 4.)
+The binary is executed periodically (~ 30 min). I run it on my [rasbpi 4][pi-4]. The main idea is that each generated page is an S3 object, therefore we don't need to provision a server.
 
 [`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other metadata (timestamp of insertion, submission title, url, which filters it passed).
 
@@ -82,6 +84,16 @@ cross build --target armv7-unknown-linux-gnueabihf --release
 
 There's a helper script `deploy.sh` which compiles the binary and deploys it to the pi. It requires env vars listed in the `.env.deploy.example`. Rename the file to `.env.deploy` and change the values to deploy.
 
+## Cron
+We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
+
+```
+# enters the dir where the binary is stored and runs the binary as root every
+# time minute is ":00: or ":30"
+# appends the logs to a file
+0,30 * * * * cd /path/to/bin/dir && /usr/bin/sudo -H ./suckless_hn >>logs.txt 2>&1
+```
+
 <!-- References -->
 [homepage]: https://suckless.hn
 [pi-4]: https://www.raspberrypi.org/products/raspberry-pi-4-model-b
@@ -95,3 +107,4 @@ There's a helper script `deploy.sh` which compiles the binary and deploys it to 
 [wayback-donate]: https://archive.org/donate
 [hn-hide-story]: https://news.ycombinator.com/item?id=5225884
 [s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type
+[pi-crontab]: https://www.raspberrypi.org/documentation/linux/usage/cron.md

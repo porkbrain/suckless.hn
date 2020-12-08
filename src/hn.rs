@@ -29,8 +29,9 @@ pub async fn fetch_stories(ids: &[StoryId]) -> Result<Vec<Story>> {
     let stories = results
         .into_iter()
         .filter_map(|res| {
+            // stories which cannot be downloaded are retried next time
             res.map_err(|e| {
-                log::error!("Cannot download story: e");
+                log::error!("Cannot download story: {}", e);
                 e
             })
             .ok()
