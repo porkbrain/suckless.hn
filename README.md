@@ -45,7 +45,7 @@ There are also groups of filters. For example [`https://suckless.hn/-amfg-bignew
 Filters in a group are alphabetically sorted ASC.
 
 ## Design
-The binary is executed periodically (~ 30 min). I run it on my [rasbpi 4][pi-4]. The main idea is that each generated page is an S3 object, therefore we don't need to provision a server.
+The binary is executed periodically (~ 30 min). It runs on [rasbpi 4][pi-4]. The main idea is that each generated page is an S3 object, therefore we don't need to provision a server.
 
 [`sqlite`][sqlite] database stores ids of top HN posts that are already downloaded + some other data (timestamp of insertion, submission title, url, which filters it passed).
 
@@ -68,7 +68,7 @@ We leverage [wayback machine APIs][wayback-machine-api] to provide users link to
 Please [donate][wayback-donate] to keep Wayback machine awesome.
 
 ## Build and deploy
-I run the binary periodically on my [raspberry pi 4][pi-4]. To build for the target [`armv7-unknown-linux-gnueabihf`][pi-target] we use [`cross`][cross].
+The binary runs periodically on [raspberry pi 4][pi-4]. To build for the target [`armv7-unknown-linux-gnueabihf`][pi-target] we use [`cross`][cross].
 
 Install `cross`.
 
