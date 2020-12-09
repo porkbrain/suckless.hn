@@ -24,7 +24,7 @@ A filter is given a story data and flags the story if it passes the filter. Feel
 
 Each filter has a two landing pages. One with only stories which were flagged, one with anything but. This is decided by two modifiers: `+` and `-`. For example to only see stories from large newspapers visit [`https://suckless.hn/+bignews`](https://suckless.hn/+bignews). To get HN without large newspapers visit [`https://suckless.hn/-bignews`](https://suckless.hn/-bignews).
 
-There are also groups of filters. For example [`https://suckless.hn/-amfg-bignews`](https://suckless.hn/-amfg-bignews) filters out large newspapers and all mentions of big tech. This also happens to be the default view on the [homepage][homepage].
+There are also groups of filters. For example [`https://suckless.hn/-amfg-bignews`](https://suckless.hn/-amfg-bignews) filters out large newspapers _and_ all mentions of big tech. This also happens to be the default view on the [homepage][homepage]. `-` modifier in a group is conjunctive, i.e. only stories which didn't pass any of the filters are shown. `+` modifier is disjunctive, i.e. stories which passed any of the filters are shown. For example [suckless.hn/`+askhn+showhn`](https://suckless.hn/+askhn+showhn) shows "Show HN" _or_ "Ask HN" stories.
 
 ### List
 **List of implemented filters:**
