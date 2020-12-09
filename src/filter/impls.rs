@@ -45,6 +45,7 @@ impl Filter for LargeNewspaper {
                 "nytimes\\.com|",
                 "spectator\\.co\\.uk|",
                 "theguardian\\.com|",
+                "thehill\\.com|",
                 "vice\\.com|",
                 "wsj\\.com",
                 ")"

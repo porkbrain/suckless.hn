@@ -338,7 +338,7 @@ mod tests {
         assert_eq!(6, pages.get("-askhn").unwrap().len());
         assert_eq!(5, pages.get("-amfg-bignews").unwrap().len());
         assert_eq!(6, pages.get("-amfg").unwrap().len());
-        assert_eq!(1, pages.get("+askhn+showhn").unwrap().len());
+        assert_eq!(2, pages.get("+askhn+showhn").unwrap().len());
         assert_eq!(limit_stories_per_page, pages.get("+all").unwrap().len());
 
         Ok(())

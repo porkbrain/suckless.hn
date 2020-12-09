@@ -44,6 +44,7 @@ cross build --release --target "${ARM_TARGET}"
 
 echo "rsync over ssh -p ${SSH_PORT} -i ${SSH_PRIVATE_KEY_PATH}
 from '${bin_path}' to '${PI_HOST}:/home/pi/suckless.hn'"
-rsync -e "ssh -p ${SSH_PORT:-22} -i ${SSH_PRIVATE_KEY_PATH}" \
+rsync --progress \
+     -e "ssh -p ${SSH_PORT:-22} -i ${SSH_PRIVATE_KEY_PATH}" \
     "${bin_path}" \
     ${PI_HOST}:/home/pi/suckless.hn

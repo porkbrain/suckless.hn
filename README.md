@@ -32,7 +32,7 @@ There are also groups of filters. For example [`https://suckless.hn/-amfg-bignew
 
 * [`+showhn`](https://suckless.hn/+showhn)/[`-showhn`](https://suckless.hn/-showhn) flags "Show HN" titles
 
-* [`+bignews`](https://suckless.hn/+bignews)/[`-bignews`](https://suckless.hn/-bignews) flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC, Forbes, Spectator, LA Times and NY Times. More large news may be added later. Any general news website which has *~60* submissions (2 pages) in the past year falls into this category. HN search query: `https://hn.algolia.com/?dateRange=pastYear&page=2&prefix=true&sort=byPopularity&type=story&query=${DOMAIN}`.
+* [`+bignews`](https://suckless.hn/+bignews)/[`-bignews`](https://suckless.hn/-bignews) flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC, BBC, Forbes, Spectator, LA Times, The Hill and NY Times. More large news may be added later. Any general news website which has *~60* submissions (2 pages) in the past year falls into this category. HN search query: `https://hn.algolia.com/?dateRange=pastYear&page=2&prefix=true&sort=byPopularity&type=story&query=${DOMAIN}`.
 
 * [`+amfg`](https://suckless.hn/+amfg)/[`-amfg`](https://suckless.hn/-amfg) flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Most of the time the submissions are scandalous and comment sections low entropy but addictive.
 
