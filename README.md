@@ -36,6 +36,8 @@ There are also groups of filters. For example [`https://suckless.hn/-amfg-bignew
 
 * [`+amfg`](https://suckless.hn/+amfg)/[`-amfg`](https://suckless.hn/-amfg) flags titles which mention "Google", "Facebook", "Apple" or "Microsoft". No more endless Google-bashing comment binging at 3 AM. Most of the time the submissions are scandalous and comment sections low entropy but addictive.
 
+* special [`+all`](https://suckless.hn/+all) front page which includes all HN top stories
+
 **List of filter groups:**
 * [suckless.hn/`-amfg-bignews`](https://suckless.hn/-amfg-bignews) (default)
 * [suckless.hn/`+askhn+showhn`](https://suckless.hn/+askhn+showhn)
