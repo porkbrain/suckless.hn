@@ -84,6 +84,8 @@ cross build --target armv7-unknown-linux-gnueabihf --release
 
 There's a helper script `deploy.sh` which compiles the binary and deploys it to the pi. It requires env vars listed in the `.env.deploy.example`. Rename the file to `.env.deploy` and change the values to deploy.
 
+We use custom [image](armv7-unknown-linux-gnueabihf/Dockerfile) for compilation to support [OpenSSL][cross-opensll].
+
 ## Cron
 We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
 
@@ -95,18 +97,19 @@ We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
 ```
 
 <!-- References -->
+[create-issue]: https://github.com/bausano/suckless.hn/issues/new
+[cross-openssl]: https://www.reddit.com/r/rust/comments/axaq9b/opensslsys_error_when_crosscompiling_for/ehsa59c
+[cross]: https://github.com/rust-embedded/cross
+[hn-hide-story]: https://news.ycombinator.com/item?id=5225884
+[hn-item]: https://github.com/HackerNews/API#items
+[hn-topstories]: https://github.com/HackerNews/API#new-top-and-best-stories
+[hn]: https://news.ycombinator.com/news
 [homepage]: https://suckless.hn
 [pi-4]: https://www.raspberrypi.org/products/raspberry-pi-4-model-b
-[pi-target]: https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
-[cross]: https://github.com/rust-embedded/cross
-[sqlite]: https://github.com/rusqlite/rusqlite
-[hn-topstories]: https://github.com/HackerNews/API#new-top-and-best-stories
-[hn-item]: https://github.com/HackerNews/API#items
-[suckless-hn]: https://suckless.hn
-[wayback-machine-api]: https://archive.org/help/wayback_api.php
-[wayback-donate]: https://archive.org/donate
-[hn-hide-story]: https://news.ycombinator.com/item?id=5225884
-[s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type
 [pi-crontab]: https://www.raspberrypi.org/documentation/linux/usage/cron.md
-[hn]: https://news.ycombinator.com/news
-[create-issue]: https://github.com/bausano/suckless.hn/issues/new
+[pi-target]: https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
+[s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type
+[sqlite]: https://github.com/rusqlite/rusqlite
+[suckless-hn]: https://suckless.hn
+[wayback-donate]: https://archive.org/donate
+[wayback-machine-api]: https://archive.org/help/wayback_api.php
