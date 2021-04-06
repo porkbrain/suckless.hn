@@ -5,7 +5,7 @@
 set -e
 
 # https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
-readonly ARM_TARGET="armv7-unknown-linux-musleabihf"
+readonly ARM_TARGET="armv7-unknown-linux-gnueabihf"
 readonly BIN_NAME="suckless_hn"
 readonly REGEX_FIND_BIN_NAME="name = \"(\w+)\""
 
