@@ -23,9 +23,7 @@
 
 use {
     fallible_iterator::FallibleIterator,
-    rusqlite::{
-        params, Connection, DatabaseName, OptionalExtension, NO_PARAMS,
-    },
+    rusqlite::{params, Connection, DatabaseName, OptionalExtension},
     std::{
         convert::TryInto,
         path::Path,
@@ -214,7 +212,7 @@ fn create_table_stories(conn: &Connection) -> Result<()> {
             archive_url     TEXT,
             created_at      INTEGER(4)
         )",
-        NO_PARAMS,
+        [],
     )?;
 
     Ok(())
@@ -234,7 +232,7 @@ fn create_table_story_filters(conn: &Connection) -> Result<()> {
             showhn          INTEGER(1) NOT NULL DEFAULT 0,
             FOREIGN KEY(story_id) REFERENCES stories(id)
         )",
-        NO_PARAMS,
+        [],
     )?;
 
     Ok(())
