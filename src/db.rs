@@ -23,12 +23,9 @@
 
 use {
     fallible_iterator::FallibleIterator,
-    rusqlite::{
-        params, Connection, DatabaseName, OptionalExtension, NO_PARAMS,
-    },
+    rusqlite::{params, Connection, OptionalExtension},
     std::{
         convert::TryInto,
-        path::Path,
         time::{SystemTime, UNIX_EPOCH},
     },
 };
@@ -37,16 +34,10 @@ use crate::{conf, filter::Filter, hn, prelude::*};
 
 /// Creates sqlite connection to a file. If the file doesn't exist, creates
 /// necessary tables.
-///
-/// If `BACKUPS_DIR` env var is set we backup the db.
 pub fn conn(conf: &conf::Conf) -> Result<Connection> {
     let conn = Connection::open(&conf.sqlite_file)?;
     create_table_stories(&conn)?;
     create_table_story_filters(&conn)?;
-
-    if let Some(backups_dir) = &conf.backups_dir {
-        backup(&conn, backups_dir)?;
-    }
 
     Ok(conn)
 }
@@ -214,7 +205,7 @@ fn create_table_stories(conn: &Connection) -> Result<()> {
             archive_url     TEXT,
             created_at      INTEGER(4)
         )",
-        NO_PARAMS,
+        [],
     )?;
 
     Ok(())
@@ -234,21 +225,8 @@ fn create_table_story_filters(conn: &Connection) -> Result<()> {
             showhn          INTEGER(1) NOT NULL DEFAULT 0,
             FOREIGN KEY(story_id) REFERENCES stories(id)
         )",
-        NO_PARAMS,
+        [],
     )?;
-
-    Ok(())
-}
-
-// Creates a new backup file of the main database with current time in name.
-fn backup(conn: &Connection, backups_dir: impl AsRef<Path>) -> Result<()> {
-    let unix_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-    let backup_file_path =
-        backups_dir.as_ref().join(format!("{}.bak", unix_time));
-    let progress_fn = None;
-
-    log::info!("Backing up database into {:?}.", backup_file_path);
-    conn.backup(DatabaseName::Main, backup_file_path, progress_fn)?;
 
     Ok(())
 }

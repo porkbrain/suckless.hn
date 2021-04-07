@@ -1,0 +1,59 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: suckless-hn-cron
+  namespace: suckless-hn
+  labels:
+    app: suckless-hn
+spec:
+  # twice an hour
+  schedule: "0,30 * * * *"
+  jobTemplate:
+    spec:
+      # https://github.com/kubernetes/kubernetes/issues/20255#issuecomment-310540940
+      # don't retry the job, wait until another scheduled run
+      backoffLimit: 1
+      activeDeadlineSeconds: 100
+      template:
+        metadata:
+          labels:
+            app: suckless-hn
+        spec:
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 3000
+            fsGroup: 1000
+          restartPolicy: OnFailure
+          containers:
+          - name: suckless-hn
+            # this version is autoupdated with build.rs
+            image: porkbrain/suckless.hn:2.0.0
+            env:
+            - name: SQLITE_FILE
+              value: "/data/db.db3"
+            - name: RUST_LOG
+              value: "suckless_hn=trace"
+            - name: BUCKET_NAME
+              value: "suckless.hn"
+            - name: BUCKET_REGION
+              value: "eu-west-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: suckless-hn-aws
+                  key: key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: suckless-hn-aws
+                  key: secret
+            volumeMounts:
+            - mountPath: /data
+              name: suckless-data
+          volumes:
+          - name: suckless-data
+            persistentVolumeClaim:
+              claimName: suckless-hn-pvc
+          nodeSelector:
+            beta.kubernetes.io/arch: arm64
+
