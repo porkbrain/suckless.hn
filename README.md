@@ -8,11 +8,13 @@ type of content, hence *suckless.hn*.
 * Why doesn't this instead exist as an app into which I login as an HN user and
   it [hides][hn-hide-story] stories on my behalf?
 
-    As a user I wouldn't login into a 3rd party app. As a developer I don't want to manage user credentials.
+    As a user I wouldn't login into a 3rd party app. As a developer I don't
+    want to manage user credentials.
 
 * Can I have custom filters configurable from a UI?
 
-    Out of scope. [Create an issue][create-issue] or submit a PR if there's a filter you wish to use.
+    Out of scope. [Create an issue][create-issue] or submit a PR if there's a
+    filter you wish to use.
 
 * Will you change a filter I use without my knowledge?
 
@@ -48,9 +50,11 @@ HN" _or_ "Ask HN" stories.
 
 ### List
 **List of implemented filters:**
-* [`+askhn`](https://suckless.hn/+askhn)/[`-askhn`](https://suckless.hn/-askhn) flags "Ask HN" titles
+* [`+askhn`](https://suckless.hn/+askhn)/[`-askhn`](https://suckless.hn/-askhn)
+  flags "Ask HN" titles
 
-* [`+showhn`](https://suckless.hn/+showhn)/[`-showhn`](https://suckless.hn/-showhn) flags "Show HN" titles
+* [`+showhn`](https://suckless.hn/+showhn)/[`-showhn`](https://suckless.hn/-showhn)
+  flags "Show HN" titles
 
 * [`+bignews`](https://suckless.hn/+bignews)/[`-bignews`](https://suckless.hn/-bignews)
   flags urls from large news sites Bloomberg, VICE, The Guardian, WSJ, CNBC,
@@ -74,9 +78,8 @@ HN" _or_ "Ask HN" stories.
 Filters in a group are alphabetically sorted ASC.
 
 ## Design
-The binary is executed periodically (~ 30 min). It runs on [rasbpi 4][pi-4].
-The main idea is that each generated page is an S3 object, therefore we don't
-need to provision a server.
+The binary is executed periodically (~ 30 min). Each generated page is an S3
+object, therefore we don't need to provision a web server.
 
 [`sqlite`][sqlite] database stores ids of top HN posts that are already
 downloaded + some other data (timestamp of insertion, submission title, url,
@@ -87,7 +90,7 @@ The endpoint to query top stories on HN is
 download stories which we haven't checked before. The data about a story is
 available via [item endpoint][hn-item].
 
-We check each new story against Suckless Filters™ before inserting it into the
+We check each new story against Suckless filters before inserting it into the
 database table `stories`. The flags for each filter are persisted in
 `story_filters` table.
 
@@ -114,38 +117,37 @@ to the latest archived snapshot at the time of the submission.
 
 Please [donate][wayback-donate] to keep Wayback machine awesome.
 
-## Build and deploy
-The binary runs periodically on [raspberry pi 4][pi-4]. To build for the target
-[`armv7-unknown-linux-gnueabihf`][pi-target] we use [`cross`][cross].
+## Build
+I run the binary on my [k8s homelab cluster][cluster] as a [cron
+job](k8s/cron.yml). Originally, this ran as a cron job on my [raspberry pi
+4][pi-4], which is now a node in the cluster. I still build this project for
+[ARM][pi-target]. See the [`k8s`](k8s) directory for more docs about how this
+project runs in the cluster.
 
-Install `cross`.
+I use a [build script](bin/build.sh) to build and test this project. First,
+you'll need to install `cross`:
 
 ```bash
 cargo install --git https://github.com/anupdhml/cross.git --branch master
 ```
 
-Compile for `armv7-unknown-linux-gnueabihf`.
+We use custom [image](armv7-unknown-linux-gnueabihf/Dockerfile) for compilation
+to support [OpenSSL][cross-opensll].
+
+Next, either use the build script or directly compile for
+`armv7-unknown-linux-gnueabihf`:
 
 ```bash
 cross build --target armv7-unknown-linux-gnueabihf --release
 ```
 
-There's a helper script `deploy.sh` which compiles the binary and deploys it to
-the pi. It requires env vars listed in the `.env.deploy.example`. Rename the
-file to `.env.deploy` and change the values to deploy.
+Locally I build the [docker image with the binary](Dockerfile) and push it to
+the [Docker hub][dockerhub-suckless-hn]. That's where my k8s cluster pulls it
+from.
 
-We use custom [image](armv7-unknown-linux-gnueabihf/Dockerfile) for compilation
-to support [OpenSSL][cross-opensll].
-
-## Cron
-We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
-
-```
-# enters the dir where the binary is stored and runs the binary as root every
-# time minute is ":00: or ":30"
-# appends the logs to a file
-0,30 * * * * cd /path/to/bin/dir && /usr/bin/sudo -H ./suckless_hn >>logs.txt 2>&1
-```
+### Env
+See the [`.env.example`](.env.example) file for environment variable the binary
+expects.
 
 <!-- References -->
 [create-issue]: https://github.com/bausano/suckless.hn/issues/new
@@ -157,10 +159,11 @@ We setup a [`crontab`][pi-crontab] which runs the binary every 30 minutes.
 [hn]: https://news.ycombinator.com/news
 [homepage]: https://suckless.hn
 [pi-4]: https://www.raspberrypi.org/products/raspberry-pi-4-model-b
-[pi-crontab]: https://www.raspberrypi.org/documentation/linux/usage/cron.md
 [pi-target]: https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
 [s3-upload]: https://durch.github.io/rust-s3/s3/bucket/struct.Bucket.html#method.put_object_with_content_type
 [sqlite]: https://github.com/rusqlite/rusqlite
 [suckless-hn]: https://suckless.hn
 [wayback-donate]: https://archive.org/donate
 [wayback-machine-api]: https://archive.org/help/wayback_api.php
+[cluster]: https://github.com/bausano/cluster
+[dockerhub-suckless-hn]: https://hub.docker.com/repository/docker/porkbrain/suckless.hn

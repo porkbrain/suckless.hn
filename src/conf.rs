@@ -9,8 +9,6 @@ pub struct Conf {
     pub sqlite_file: PathBuf,
     /// The handle to the S3 bucket where we upload pages.
     pub bucket: Bucket,
-    /// If provided, we run a db backup before we start downloading new items.
-    pub backups_dir: Option<PathBuf>,
     /// How many new stories should we fetch from the HNs APIs.
     pub new_stories_limit: usize,
     /// How many stories can a page display at most.
@@ -32,15 +30,6 @@ impl Conf {
                 panic!("Missing env var {}.", vars::SQLITE_FILE)
             });
         log::debug!("{}={:?}", vars::SQLITE_FILE, sqlite_file);
-
-        let backups_dir = env::var(vars::BACKUPS_DIR)
-            .map(PathBuf::from)
-            .map(Some)
-            .unwrap_or(None);
-        log::debug!("{}={:?}", vars::BACKUPS_DIR, backups_dir);
-        if let Some(backups_dir) = &backups_dir {
-            assert!(backups_dir.is_dir(), "Backups dir must exist");
-        }
 
         // swallows parsing errors but it's ok for our use case
         let new_stories_limit = env::var(vars::NEW_STORIES_LIMIT)
@@ -95,7 +84,6 @@ impl Conf {
         bucket.add_header("Cache-Control", &content_cache_header);
 
         Self {
-            backups_dir,
             bucket,
             new_stories_limit,
             sqlite_file,
@@ -110,7 +98,6 @@ mod vars {
     pub const BUCKET_NAME: &str = "BUCKET_NAME";
     pub const BUCKET_REGION: &str = "BUCKET_REGION";
     pub const STORE_HTML_LOCALLY: &str = "STORE_HTML_LOCALLY"; // opt
-    pub const BACKUPS_DIR: &str = "BACKUPS_DIR"; // opt
     pub const NEW_STORIES_LIMIT: &str = "NEW_STORIES_LIMIT"; // opt
     pub const STORIES_PER_PAGE: &str = "STORIES_PER_PAGE"; // opt
     pub const CONTENT_CACHE_HEADER: &str = "CONTENT_CACHE_HEADER"; // opt
