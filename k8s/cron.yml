@@ -26,8 +26,8 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: suckless-hn
-            # IMPORTANT: don't forget to change version when updating
-            image: porkbrain/suckless.hn:xxx
+            # this version is autoupdated with build.rs
+            image: porkbrain/suckless.hn:2.0.0
             env:
             - name: SQLITE_FILE
               value: "/data/db.db3"

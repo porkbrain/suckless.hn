@@ -19,6 +19,3 @@ echo
 
 docker build . --tag "${image_name}"
 docker push "${image_name}"
-
-echo
-echo "Changing the version in k8s/cron.yml"
