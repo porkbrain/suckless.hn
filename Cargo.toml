@@ -27,7 +27,7 @@ tokio = { version = "1.4", features = ["fs", "macros", "rt-multi-thread"] }
 version = "0.25"
 # Bundles the necessary libs.
 # https://github.com/rusqlite/rusqlite#notes-on-building-rusqlite-and-libsqlite3-sys
-features = ["bundled", "backup"]
+features = ["bundled"]
 
 [dev-dependencies]
 names = "0.11"
