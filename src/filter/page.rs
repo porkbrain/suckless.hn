@@ -72,7 +72,7 @@ impl Page {
     }
 
     /// Returns the name of the page. This should be used for the S3 object.
-    /// Users will access the page at `https://suckless.hn/${name}`.
+    /// Users will access the page at `https://${domain}/${name}`.
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -210,7 +210,7 @@ impl Page {
     }
 }
 
-/// Creates list of pages for suckless.hn and populates them with stories from
+/// Creates list of pages for sucklesshn and populates them with stories from
 /// the database.
 pub fn populate(
     conn: &Connection,
@@ -238,7 +238,7 @@ pub fn populate(
     pages
 }
 
-// List of all suckless.hn pages.
+// List of all suckless  pages.
 fn list() -> Vec<Page> {
     vec![
         Page::all(),
