@@ -1,15 +1,15 @@
 [package]
-name = "suckless_hn"
+name = "sucklesshn"
 version = "2.0.0"
-authors = ["Michael <michael@porkbrain.com>"]
+authors = ["porkbrain <git@porkbrain.com>"]
 edition = "2018"
 
 [dependencies]
 dotenv = "0.15"
-env_logger = "0.8"
+env_logger = "0.9"
 fallible-iterator = "0.2"
 futures = "0.3"
-handlebars = "3.5"
+handlebars = "4.2"
 lazy_static = "1.4"
 log = "0.4"
 regex = "1.4"
@@ -30,5 +30,5 @@ version = "0.25"
 features = ["bundled"]
 
 [dev-dependencies]
-names = "0.11"
+names = "0.13"
 rand = "0.8"

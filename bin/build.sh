@@ -6,7 +6,7 @@ set -e
 
 # https://chacin.dev/blog/cross-compiling-rust-for-the-raspberry-pi
 readonly ARM_TARGET="armv7-unknown-linux-gnueabihf"
-readonly BIN_NAME="suckless_hn"
+readonly BIN_NAME="sucklesshn"
 readonly REGEX_FIND_BIN_NAME="name = \"(\w+)\""
 
 if [[ "$(cat Cargo.toml)" =~ $REGEX_FIND_BIN_NAME ]];

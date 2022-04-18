@@ -58,7 +58,7 @@ async fn fetch_new_stories(
         "Checking how many out of the {} top stories are already stored.",
         top_stories.len()
     );
-    let mut new_stories_ids = db::only_new_stories(&conn, top_stories)?;
+    let mut new_stories_ids = db::only_new_stories(conn, top_stories)?;
     new_stories_ids.truncate(new_stories_limit);
 
     log::debug!("Fetching {} new stories...", new_stories_ids.len());

@@ -45,10 +45,7 @@ impl Conf {
         log::debug!("{}={:?}", vars::STORIES_PER_PAGE, stories_per_page);
 
         let store_html_locally = env::var(vars::STORE_HTML_LOCALLY)
-            .map(|s| match s.trim() {
-                "ok" | "yes" | "1" | "true" => true,
-                _ => false,
-            })
+            .map(|s| matches!(s.trim(), "ok" | "yes" | "1" | "true"))
             .unwrap_or(false);
         log::debug!("{}={:?}", vars::STORE_HTML_LOCALLY, store_html_locally);
 

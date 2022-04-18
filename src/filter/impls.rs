@@ -53,7 +53,7 @@ impl Filter for LargeNewspaper {
         }
 
         match &story.kind {
-            StoryKind::Url(url) => NEWSPAPER_WEBSITE.is_match(&url),
+            StoryKind::Url(url) => NEWSPAPER_WEBSITE.is_match(url),
             StoryKind::Text(_) => false,
         }
     }

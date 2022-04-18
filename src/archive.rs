@@ -18,7 +18,7 @@ pub async fn fetch_snapshots_for_stories(stories: &mut [Story]) -> Result<()> {
     for story in stories {
         // only requests snapshots for urls, not for text
         if let StoryKind::Url(url) = &story.kind {
-            match fetch_snapshot(&url).await {
+            match fetch_snapshot(url).await {
                 Ok(snapshot) => story.archive_url = snapshot,
                 Err(e) => {
                     log::warn!("Cannot check snapshot for {}: {}", url, e);

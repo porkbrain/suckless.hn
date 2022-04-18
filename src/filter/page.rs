@@ -150,7 +150,7 @@ impl Page {
         html_engine: &Template,
         theme: Theme,
     ) -> Result<()> {
-        let html = html_engine.render(&self, theme)?;
+        let html = html_engine.render(self, theme)?;
 
         if conf.store_html_locally {
             let file_path = format!("pages/{}/{}.html", theme, self.name());
@@ -219,7 +219,7 @@ pub fn populate(
 ) -> Vec<Page> {
     let mut pages = list();
     for top_story_id in top_stories {
-        if let Ok(Some(story)) = db::select_story(&conn, top_story_id) {
+        if let Ok(Some(story)) = db::select_story(conn, top_story_id) {
             let story = Rc::new(story);
             for page in &mut pages {
                 if page.len() < page_limit {
