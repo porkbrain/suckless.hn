@@ -25,7 +25,7 @@ type of content, hence *suckless hn*.
 
 * Why not ML?
 
-    I prefer a set of transparent and easily editable rules to decide what I
+    I prefer a set of transparent and readable rules to decide what I
     don't see. Plus that's easier.
 
 ## Suckless filters
